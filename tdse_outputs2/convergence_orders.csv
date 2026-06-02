@@ -1,0 +1,4 @@
+method,fitted_L2_order
+Crank-Nicolson,1.7145658455398223
+Split-Step-FFT,15.927464146482636
+RK4,1.7146728846246333

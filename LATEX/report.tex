@@ -1,0 +1,541 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{CJKutf8}
+
+\graphicspath{{../tdse_outputs/}}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    citecolor=blue,
+    urlcolor=blue,
+}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny,
+    xleftmargin=2em,
+}
+
+\newtheorem{definition}{定义}
+\newtheorem{remark}{注记}
+
+\begin{CJK}{UTF8}{gbsn}
+\title{\textbf{基于线性薛定谔方程的势场中\\波传播与散射数值模拟}}
+\author{Your Name \quad 学号: 12345678 \quad 课程: 数值PDE数值解}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent 本文基于线性时间依赖薛定谔方程（TDSE），对一维和二维势场中波包的传播、散射与约束现象进行了系统的数值模拟与分析。一维数值实验实现了五种典型数值格式：FTCS、Backward Euler、Crank--Nicolson、RK4 和 Split-Step Fourier（SSFM），并从解析解对比、误差收敛性、稳定性、计算效率和量子隧穿现象等角度进行了全面评估。二维数值实验采用 Split-Step FFT 方法，模拟了自由传播、圆形障碍物散射和抛物型波导约束传播等典型物理场景，并进行了参数扫描分析和守恒性检验。所有数值实验均采用无量纲化方程，代码基于 Python 实现，使用 NumPy、SciPy 和 Matplotlib 等科学计算库。
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+%==============================================================================
+\section{引言}
+%==============================================================================
+
+波传播问题在应用数学和物理科学中具有广泛而深刻的研究背景。时间依赖薛定谔方程（Time-Dependent Schr\"odinger Equation, TDSE）作为量子力学的基本动力学方程，同时也是描述光学傍轴近似下光束传播的数学模型，为研究复杂势场环境中的波传播行为提供了统一的数学框架。
+
+本文的主要工作包括：
+\begin{itemize}
+    \item 在\textbf{一维}情况下，系统实现并比较了五种数值格式的性能，包括显式 FTCS、隐式 Backward Euler、隐式酉 Crank--Nicolson、四阶 Runge--Kutta（RK4）和谱方法 Split-Step Fourier（SSFM）。
+    \item 在\textbf{二维}情况下，采用 Split-Step FFT 方法模拟了自由传播、圆形障碍物散射和抛物型波导约束等典型场景。
+    \item 进行了系统的误差收敛性分析、稳定性分析、质量守恒检验和参数扫描实验。
+\end{itemize}
+
+%==============================================================================
+\section{数学模型与问题描述}
+%==============================================================================
+
+\subsection{控制方程}
+
+考虑无量纲化的线性薛定谔方程。在一维情况下：
+\begin{equation}\label{eq:tdse1d}
+    i\frac{\partial \psi}{\partial t}
+    = -\frac{1}{2}\frac{\partial^2 \psi}{\partial x^2} + V(x)\psi,
+\end{equation}
+其中 $\psi(x,t) \in \mathbb{C}$ 为复波函数，$V(x)$ 为实值空间势场，$i$ 为虚数单位。在二维情况下：
+\begin{equation}\label{eq:tdse2d}
+    i\frac{\partial \psi}{\partial t}
+    = -\frac{1}{2}\left(\frac{\partial^2\psi}{\partial x^2} + \frac{\partial^2\psi}{\partial y^2}\right)
+    + V(x,y)\psi.
+\end{equation}
+
+方程 (\ref{eq:tdse1d})--(\ref{eq:tdse2d}) 均为保守系统，总概率质量
+\begin{equation}
+    M(t) = \int |\psi|^2 \, d\mathbf{x}
+\end{equation}
+在精确解中保持守恒，即 $M(t) \equiv 1$。这一性质可作为数值格式保真度的重要检验标准。
+
+\subsection{势场建模}
+
+本文采用以下典型势场，均在代码模块 \texttt{tdse/potentials.py} 中实现：
+
+\begin{itemize}
+    \item \textbf{自由传播}：$V(x) = 0$ 或 $V(x,y) = 0$，用于验证数值格式的基本精度。
+    \item \textbf{矩形势垒}（1D）：$V(x) = V_0$ 当 $x \in [a,b]$，否则 $V(x) = 0$。用于模拟量子隧穿效应。
+    \item \textbf{圆形障碍物}（2D）：$V(x,y) = V_0$ 当 $(x-x_c)^2 + (y-y_c)^2 < R^2$，否则为 0。用于模拟波散射。
+    \item \textbf{抛物型波导}（2D）：$V(x,y) = \alpha y^2$，用于模拟横向约束传播。
+    \item \textbf{谐振子势}（1D）：$V(x) = \frac{1}{2}\omega^2 x^2$，用于验证稳态演化。
+    \item \textbf{吸收边界}（2D）：$V(x,y) = -iW(x,y)$，其中 $W$ 在边界附近二次增长，用于抑制周期性边界条件引起的回绕效应。
+\end{itemize}
+
+\subsection{初始条件}
+
+采用归一化的高斯波包作为初始条件。一维高斯波包为：
+\begin{equation}\label{eq:gaussian1d}
+    \psi(x,0) = \mathcal{N} \exp\left(-\frac{(x-x_0)^2}{2\sigma^2}\right) \exp(i k_0 x),
+\end{equation}
+二维高斯波包为：
+\begin{equation}\label{eq:gaussian2d}
+    \psi(x,y,0) = \mathcal{N} \exp\left(-\frac{(x-x_0)^2+(y-y_0)^2}{2\sigma^2}\right)
+    \exp(i(k_{x0}x + k_{y0}y)),
+\end{equation}
+其中 $\mathcal{N}$ 为归一化常数，确保 $\int |\psi|^2 d\mathbf{x} = 1$。
+
+\subsection{自由粒子高斯波包的解析解}
+
+对于自由传播（$V=0$），一维高斯波包具有精确解析解，可作为数值格式精度验证的基准：
+\begin{equation}\label{eq:exact1d}
+    \psi_{\text{exact}}(x,t) = \mathcal{N}\frac{\sigma}{\sqrt{\sigma^2 + it}}
+    \exp\left(-\frac{(x - x_0 - k_0 t)^2}{2(\sigma^2 + it)}\right)
+    \exp\left(i k_0 x - \frac{i}{2}k_0^2 t\right).
+\end{equation}
+二维情况类似，由两个独立的一维解的张量积给出。
+
+%==============================================================================
+\section{一维数值方法}
+%==============================================================================
+
+\subsection{空间离散}
+
+采用均匀网格 $x_j = x_{\min} + j\Delta x$，$j = 0, 1, \ldots, N-1$，其中 $\Delta x = (x_{\max} - x_{\min})/N$。对拉普拉斯算子使用二阶中心差分：
+\begin{equation}
+    \frac{\partial^2 \psi}{\partial x^2}\bigg|_{x_j}
+    \approx \frac{\psi_{j-1} - 2\psi_j + \psi_{j+1}}{\Delta x^2}.
+\end{equation}
+两端采用齐次 Dirichlet 边界条件（$\psi_0 = \psi_{N-1} = 0$），计算域足够大以保证边界效应可忽略。
+
+定义离散哈密顿算符的作用：
+\begin{equation}
+    (\hat{H}\psi)_j = -\frac{1}{2}\frac{\psi_{j-1} - 2\psi_j + \psi_{j+1}}{\Delta x^2} + V_j \psi_j.
+\end{equation}
+
+\subsection{FTCS 格式（显式向前 Euler）}
+
+FTCS（Forward-Time Centered-Space）是最简单的显式格式：
+\begin{equation}
+    \psi_j^{n+1} = \psi_j^n - i\Delta t (\hat{H}\psi^n)_j.
+\end{equation}
+该格式\textbf{条件不稳定}——对于薛定谔方程，其放大因子恒大于 1。本文保留此格式作为反面教材，展示不恰当格式的数值发散行为。
+
+\subsection{Backward Euler 格式（隐式）}
+
+向后 Euler 格式为无条件稳定（范数有界）：
+\begin{equation}
+    (I + i\Delta t \hat{H}) \psi^{n+1} = \psi^n.
+\end{equation}
+该格式需要求解三对角线性系统，本文使用 \texttt{scipy.linalg.solve\_banded} 实现。虽然范数稳定，但该格式不保持酉性，会导致质量衰减。
+
+\subsection{Crank--Nicolson 格式（隐式酉格式）}
+
+Crank--Nicolson 格式是二阶时间精度、无条件稳定且\textbf{保持酉性}的格式：
+\begin{equation}
+    \left(I + \frac{i\Delta t}{2}\hat{H}\right) \psi^{n+1}
+    = \left(I - \frac{i\Delta t}{2}\hat{H}\right) \psi^n.
+\end{equation}
+该格式对线性薛定谔方程严格保持 $L^2$ 范数不变，是有限差分方法中的黄金标准。
+
+\subsection{RK4 格式（显式四阶 Runge--Kutta）}
+
+对半离散系统 $\partial_t \psi = -i\hat{H}\psi$ 应用经典四阶 Runge--Kutta 方法：
+\begin{align}
+    k_1 &= -i\hat{H}\psi^n, \nonumber\\
+    k_2 &= -i\hat{H}(\psi^n + \tfrac{\Delta t}{2}k_1), \nonumber\\
+    k_3 &= -i\hat{H}(\psi^n + \tfrac{\Delta t}{2}k_2), \nonumber\\
+    k_4 &= -i\hat{H}(\psi^n + \Delta t k_3), \nonumber\\
+    \psi^{n+1} &= \psi^n + \frac{\Delta t}{6}(k_1 + 2k_2 + 2k_3 + k_4).
+\end{align}
+RK4 为条件稳定，对薛定谔方程需保证 $\Delta t/\Delta x^2$ 足够小（经验值 $\leq 0.25$）。
+
+\subsection{Split-Step Fourier 方法（谱方法）}
+
+Split-Step Fourier 方法（SSFM）利用算符分裂思想，将演化算符分解为势能部分和动能部分。在每一步 $\Delta t$ 内采用 Strang 分裂：
+\begin{equation}
+    \psi^{n+1} = e^{-iV\Delta t/2} \, \mathcal{F}^{-1}\left[ e^{-i k^2 \Delta t/2} \, \mathcal{F}[e^{-iV\Delta t/2}\psi^n] \right],
+\end{equation}
+其中 $\mathcal{F}$ 和 $\mathcal{F}^{-1}$ 分别为快速傅里叶变换（FFT）及其逆变换，$k = 2\pi \xi$ 为傅里叶空间波数。该方法的优势在于：
+\begin{itemize}
+    \item 全局谱精度（空间方向）
+    \item 天然保持酉性
+    \item 对光滑势场和波函数非常高效
+\end{itemize}
+
+\subsection{数值格式总览}
+
+表~\ref{tab:methods} 汇总了五种一维数值格式的关键性质。
+
+\begin{table}[H]
+\centering
+\caption{一维数值格式性质汇总}
+\label{tab:methods}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{格式} & \textbf{类型} & \textbf{时间精度} & \textbf{稳定性} & \textbf{酉性} \\
+\midrule
+FTCS            & 显式     & $\mathcal{O}(\Delta t)$    & 条件不稳定 & 否 \\
+Backward Euler  & 隐式     & $\mathcal{O}(\Delta t)$    & 无条件稳定 & 否 \\
+Crank--Nicolson & 隐式     & $\mathcal{O}(\Delta t^2)$  & 无条件稳定 & 是 \\
+RK4             & 显式     & $\mathcal{O}(\Delta t^4)$  & 条件稳定   & 否 \\
+Split-Step FFT  & 谱方法   & $\mathcal{O}(\Delta t^2)$  & 无条件稳定 & 是 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%==============================================================================
+\section{二维数值方法}
+%==============================================================================
+
+\subsection{Split-Step FFT（2D）}
+
+二维数值模拟全部采用 Split-Step FFT 方法。对于二维均匀网格，$x$ 和 $y$ 方向分别使用 $N_x$ 和 $N_y$ 个节点，总网格点数为 $N_x \times N_y$。波数矩阵 $KX$ 和 $KY$ 通过 \texttt{np.fft.fftfreq} 构建，采用 \texttt{ij}-索引。
+
+二维 Strang 分裂格式为：
+\begin{equation}
+    \psi^{n+1} = e^{-iV\Delta t/2} \,
+    \mathcal{F}_{2D}^{-1}\left[ e^{-i(k_x^2 + k_y^2)\Delta t/2} \,
+    \mathcal{F}_{2D}[e^{-iV\Delta t/2}\psi^n] \right],
+\end{equation}
+其中 $\mathcal{F}_{2D}$ 为二维快速傅里叶变换（\texttt{np.fft.fft2}）。
+
+\subsection{吸收边界条件}
+
+由于 FFT 天然引入周期性边界条件，在模拟圆形障碍物散射时，波函数可能从一侧穿出计算域后从另一侧重新进入。为了解决这一问题，在计算域边界附近引入复值吸收势：
+\begin{equation}
+    V_{\text{abs}}(x,y) = -i \cdot \text{strength} \cdot
+    \left[\left(\frac{\max(0, d_x)}{\text{width}}\right)^2
+    + \left(\frac{\max(0, d_y)}{\text{width}}\right)^2\right],
+\end{equation}
+其中 $d_x$ 和 $d_y$ 分别为网格点到 $x$ 和 $y$ 方向最近边界的距离。该吸收势在边界附近二次增长，有效抑制回绕。
+
+\subsection{数值参数配置}
+
+表~\ref{tab:config} 列出了本文使用的默认数值参数。
+
+\begin{table}[H]
+\centering
+\caption{数值模拟默认参数配置}
+\label{tab:config}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{参数} & \textbf{1D 默认值} & \textbf{2D 默认值} \\
+\midrule
+空间域 $x$       & $[-30, 30]$        & $[-15, 15]$ \\
+空间域 $y$       & ---                & $[-15, 15]$ 或 $[-10, 10]$ \\
+网格点数 $N$     & $384$ 或 $512$     & $128\times128$ \\
+$\Delta t$       & $0.002$--$0.004$   & $0.01$ \\
+$t_{\text{end}}$ & $0.8$--$3.0$       & $1.5$--$3.5$ \\
+快速模式 $N$     & $384$              & $96\times96$ \\
+dpi（图像）      & $300$              & $300$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%==============================================================================
+\section{一维数值实验结果}
+%==============================================================================
+
+\subsection{解析解对比}
+
+图~\ref{fig:1d_analytic} 展示了自由高斯波包在 $t=2.0$ 时五种数值格式与精确解 (\ref{eq:exact1d}) 的对比。FTCS 格式由于本质不稳定，其解已发散故未包含在密度曲线中。Crank--Nicolson、Split-Step FFT 和 RK4 均与精确解高度吻合。Backward Euler 格式虽然范数稳定，但由于不保持酉性，波包幅度有所衰减。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{figure1_analytic_vs_numerical.png}
+\caption{一维解析解与数值解对比：上排为自由高斯波包的 $|\psi|^2$ 分布及 $L_2$ 误差对比；下排为无限深势阱本征态（$n=2$）和谐振子本征态（$n=1$）的 Crank--Nicolson 演化验证}
+\label{fig:1d_analytic}
+\end{figure}
+
+\subsection{误差收敛性分析}
+
+图~\ref{fig:1d_convergence} 展示了 Crank--Nicolson、Split-Step FFT 和 RK4 三种格式的 $L_2$ 误差随网格间距 $\Delta x$ 的收敛行为。在双对数坐标下，误差曲线近似为直线，通过最小二乘拟合得到收敛阶数 $p$。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{figure2_error_convergence.png}
+\caption{一维 $L_2$ 误差收敛性分析：三种格式的误差随网格间距 $\Delta x$ 的变化（双对数坐标），图中标注了拟合的收敛阶数 $p$}
+\label{fig:1d_convergence}
+\end{figure}
+
+\subsection{稳定性分析}
+
+图~\ref{fig:1d_stability} 展示了五种格式在不同网格点数 $N$ 和时间步长 $\Delta t$ 组合下的稳定性扫描结果。绿色表示稳定（质量 $M \in [0.2, 1.8]$ 且最大振幅 $<8.0$），红色表示发散。FTCS 在所有参数组合下均不稳定，验证了其条件不稳定的理论分析。Backward Euler 和 Crank--Nicolson 无条件稳定，Split-Step FFT 在所有测试参数下稳定，RK4 在 $\Delta t$ 较大时出现不稳定。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{figure3_stability_map.png}
+\caption{稳定性扫描图：五种格式在不同 $(N, \Delta t)$ 组合下的稳定性（绿色=稳定，红色=发散）}
+\label{fig:1d_stability}
+\end{figure}
+
+\subsection{性能对比}
+
+图~\ref{fig:1d_performance} 以表格形式展示了 FTCS、Crank--Nicolson 和 Split-Step FFT 三种格式在不同网格规模下的计算耗时。Split-Step FFT 利用 FFT 的 $\mathcal{O}(N\log N)$ 复杂度，在大规模网格下具有显著优势。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{figure4_performance_table.png}
+\caption{一维格式运行时间对比表}
+\label{fig:1d_performance}
+\end{figure}
+
+\subsection{波包传播动画}
+
+图~\ref{fig:1d_wavepacket} 展示了自由高斯波包在 $t \in [0, 3.0]$ 范围内使用 Split-Step FFT 演化的末帧快照，数值解与精确解高度吻合。完整的传播动画以 GIF 格式保存。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{figure5_wavepacket_last_frame.png}
+\caption{一维自由高斯波包 Split-Step FFT 演化末帧（$t=3.0$），虚线为精确解}
+\label{fig:1d_wavepacket}
+\end{figure}
+
+\subsection{量子隧穿模拟}
+
+图~\ref{fig:1d_tunneling} 展示了高斯波包入射矩形势垒（$V_0=1.0$，$a=-1.0$，$b=1.0$）的隧穿现象。实验涵盖了三种能量情形：$E < V_0$（$k_0 \approx 1.05$）、$E \approx V_0$（$k_0 \approx 1.41$）和 $E > V_0$（$k_0 \approx 1.90$）。随着入射能量增大，透射概率 $T$ 显著增加，反射概率 $R$ 相应减小，符合量子力学预期。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{figure6_tunneling_simulation.png}
+\caption{量子隧穿模拟：三种能量情形下波包与矩形势垒的相互作用，右下为透射/反射概率对比}
+\label{fig:1d_tunneling}
+\end{figure}
+
+\subsection{多格式对比}
+
+图~\ref{fig:1d_method_cmp} 展示了在弱谐振子势（$\omega=0.1$）中，五种格式从相同初始条件出发的演化结果对比。各格式在势场中的波包形态和位置存在细微差异，反映了不同格式的相位精度和耗散特性。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{method_comparison.png}
+\caption{五种一维格式在弱谐振子势中的演化对比}
+\label{fig:1d_method_cmp}
+\end{figure}
+
+%==============================================================================
+\section{二维数值实验结果}
+%==============================================================================
+
+\subsection{二维自由传播}
+
+图~\ref{fig:2d_free} 展示了二维自由高斯波包在 $t=0$、$t=1.0$ 和 $t=2.0$ 三个时刻的 $|\psi|^2$ 密度分布热图，以及质量守恒曲线。Split-Step FFT 方法在二维自由传播中保持了极高的质量守恒精度（误差 $<10^{-4}$）。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{figure7_2d_free_propagation.png}
+\caption{二维自由高斯波包传播：三个时刻的密度热图及质量守恒验证}
+\label{fig:2d_free}
+\end{figure}
+
+\subsection{圆形障碍物散射}
+
+图~\ref{fig:2d_scatter} 展示了高斯波包（$k_{x0}=3.0$）入射圆形障碍物（半径 $R=1.5$，势高 $V_0=20.0$）的散射过程。三个时刻分别对应初始状态、接近障碍物和散射后的波包形态。右下子图展示了散射角的角分布，呈现明显的后向散射特征。该实验还引入了复值吸收边界势以消除周期性回绕。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{figure8_2d_circular_obstacle_absorbing.png}
+\caption{二维圆形障碍物散射：初始、接近和散射三个时刻的密度分布及散射角分布}
+\label{fig:2d_scatter}
+\end{figure}
+
+\subsection{抛物型波导约束传播}
+
+图~\ref{fig:2d_waveguide} 对比了同一高斯波包在自由空间和抛物型波导（$V(x,y) = 0.4y^2$）中的传播行为。自由传播中波包在 $y$ 方向迅速扩散，而在波导中横向约束使波包保持窄束形态。下方子图展示了横向（$y$）边际分布，定量显示了波导的约束效果。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{figure9_2d_waveguide.png}
+\caption{二维波导约束传播：自由传播与波导约束的密度热图对比及横向束流剖面}
+\label{fig:2d_waveguide}
+\end{figure}
+
+%==============================================================================
+\section{数值分析}
+%==============================================================================
+
+\subsection{一维质量守恒分析}
+
+图~\ref{fig:conservation} 展示了 FTCS、Crank--Nicolson 和 Split-Step FFT 三种格式的质量误差 $|M(t)-M(0)|$ 随时间的变化。FTCS 格式的质量迅速发散，而 Crank--Nicolson 和 Split-Step FFT 在整个模拟时间内将质量误差控制在机器精度附近（$<10^{-14}$），充分体现了酉格式的守恒优势。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{figure_conservation_analysis.png}
+\caption{一维质量守恒分析：三种格式的质量误差 $|M(t)-M(0)|$ 随时间变化（半对数坐标）}
+\label{fig:conservation}
+\end{figure}
+
+\subsection{运行时间对比}
+
+图~\ref{fig:runtime} 以表格形式展示了 FTCS、Crank--Nicolson 和 Split-Step FFT 在相同网格（$N=384$）和总步数（$500$ 步）下的运行时间对比。尽管 FTCS 每步计算量最小，但其不稳定性使其无法实际使用；Split-Step FFT 在大规模网格下具有显著的速度优势。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{figure_runtime_comparison.png}
+\caption{一维格式运行时间及质量守恒详细对比表}
+\label{fig:runtime}
+\end{figure}
+
+\subsection{圆形障碍物参数扫描}
+
+图~\ref{fig:circular_sweep} 展示了圆形障碍物半径 $R$ 从 $0.5$ 到 $2.5$ 变化时，透射质量和散射质量的变化趋势。随着障碍物半径增大，透射质量单调递减，散射质量单调递增，符合物理直觉。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{figure_circular_sweep.png}
+\caption{圆形障碍物半径参数扫描：透射与散射质量随半径的变化}
+\label{fig:circular_sweep}
+\end{figure}
+
+\subsection{波导强度参数扫描}
+
+图~\ref{fig:waveguide_sweep} 展示了波导强度 $\alpha$ 从 $0.1$ 到 $1.0$ 变化时，波束横向展宽（标准差 $\sigma_y$）的变化趋势。随着 $\alpha$ 增大，约束力增强，波束宽度显著减小。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{figure_waveguide_sweep.png}
+\caption{波导强度参数扫描：波束横向展宽 $\sigma_y$ 随波导强度 $\alpha$ 的变化}
+\label{fig:waveguide_sweep}
+\end{figure}
+
+\subsection{二维收敛性分析}
+
+图~\ref{fig:2d_convergence} 展示了 Split-Step FFT 在二维自由高斯波包传播中的网格收敛性，包括 $L_1$、$L_2$、$L_\infty$ 误差随网格点数的变化及其收敛阶数，以及质量守恒误差在不同网格规模下的表现。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{figure_2d_convergence.png}
+\caption{二维收敛性分析：误差随网格点数变化（双对数）、质量守恒误差及不同网格规模的质量对比}
+\label{fig:2d_convergence}
+\end{figure}
+
+\subsection{二维误差热图}
+
+图~\ref{fig:2d_error} 展示了二维自由高斯波包的数值解与精确解析解之间的逐点误差分布。左图为数值解密度，中图为解析解密度，右图为逐点绝对误差 $|\psi_{\text{num}} - \psi_{\text{exact}}|$。误差主要集中在波包边缘区域。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{figure_2d_error_heatmap.png}
+\caption{二维误差热图：数值解、解析解及逐点绝对误差分布}
+\label{fig:2d_error}
+\end{figure}
+
+%==============================================================================
+\section{代码架构}
+%==============================================================================
+
+本项目采用模块化设计，代码组织如下：
+
+\begin{itemize}
+    \item \texttt{main.py} —— 主入口，提供命令行参数解析（\texttt{--quick}、\texttt{--no-gif}、\texttt{--1d-only}、\texttt{--2d-only}、\texttt{--analysis-only}）和实验调度。
+    \item \texttt{demo2.py} —— 核心实验实现，包含所有 1D 和 2D 实验函数及可视化类。
+    \item \texttt{tdse/solvers.py} —— 求解器模块，实现五种一维格式（FTCS、Backward Euler、Crank--Nicolson、RK4、Split-Step FFT）和二维 Split-Step FFT，以及求解器工厂类 \texttt{TDSESolverFactory}。
+    \item \texttt{tdse/potentials.py} —— 势场模块，定义 1D 和 2D 势场基类、具体势场类和势场工厂类 \texttt{TDSEPotentialFactory}，以及波函数初始化、归一化、误差计算等工具函数。
+    \item \texttt{tdse/config.py} —— 配置模块，管理全局参数（输出路径、网格尺寸、时间步长等）和 matplotlib 绘图样式。
+    \item \texttt{ex\_pinn.py} —— 物理信息神经网络（PINN）模块，用于求解 1D TDSE 的神经网络方法（详见附录）。
+\end{itemize}
+
+以下代码片段展示了 Split-Step FFT 2D 的核心实现：
+
+\begin{lstlisting}[language=Python, caption={二维 Split-Step FFT 核心实现（tdse/solvers.py）}, label={lst:ssf2d}]
+def step_split_step_fft_2d(
+    psi: Array, V: Array, KX: Array, KY: Array, dt: float
+) -> Array:
+    psi_half = np.exp(-0.5j * V * dt) * psi
+    psi_k = np.fft.fft2(psi_half)
+    psi_k *= np.exp(-0.5j * (KX ** 2 + KY ** 2) * dt)
+    psi_new = np.fft.ifft2(psi_k)
+    psi_new *= np.exp(-0.5j * V * dt)
+    return psi_new
+\end{lstlisting}
+
+%==============================================================================
+\section{结论}
+%==============================================================================
+
+本文基于无量纲化线性薛定谔方程，对一维和二维势场中波包的传播、散射和约束现象进行了系统的数值模拟与分析。主要结论如下：
+
+\begin{enumerate}
+    \item 在\textbf{一维}数值实验中，五种格式的对比结果表明：
+    \begin{itemize}
+        \item FTCS 格式本质不稳定，不应在实际计算中使用。
+        \item Crank--Nicolson 和 Split-Step FFT 格式在精度、稳定性和质量守恒方面均表现优异，是推荐的首选方法。
+        \item RK4 格式在足够小的时间步长下具有四阶精度，但需注意条件稳定性限制。
+        \item Backward Euler 格式无条件稳定但不保持酉性，仅适用于特定场景。
+    \end{itemize}
+
+    \item 在\textbf{二维}数值实验中，Split-Step FFT 方法成功模拟了：
+    \begin{itemize}
+        \item 自由高斯波包传播，质量守恒误差 $<10^{-4}$。
+        \item 圆形障碍物散射，清晰展示了散射角分布特征。
+        \item 抛物型波导约束传播，定量验证了波导强度对束流展宽的控制效果。
+    \end{itemize}
+
+    \item 系统的\textbf{数值分析}（收敛性、稳定性、质量守恒、参数扫描）验证了数值格式的可靠性和代码实现的正确性。
+
+    \item 项目的模块化设计使得代码具有良好的可扩展性和可维护性，求解器工厂类和势场工厂类提供了统一的接口，便于添加新的数值格式和物理场景。
+\end{enumerate}
+
+%==============================================================================
+\appendix
+\section{物理信息神经网络（PINN）方法}
+%==============================================================================
+
+作为传统数值方法的补充，本项目还实现了基于物理信息神经网络（Physics-Informed Neural Networks, PINN）的 1D TDSE 求解器（\texttt{ex\_pinn.py}）。PINN 将 PDE 残差作为损失函数的一部分，通过神经网络直接逼近波函数的实部和虚部：
+
+\begin{equation}
+    \psi(x,t) = u_\theta(x,t) + i\, v_\theta(x,t),
+\end{equation}
+其中 $u_\theta$ 和 $v_\theta$ 为全连接神经网络的输出。
+
+损失函数由三部分组成：
+\begin{align}
+    \mathcal{L} &= \mathcal{L}_{\text{IC}} + \mathcal{L}_{\text{PDE}} + \mathcal{L}_{\text{BC}}, \\
+    \mathcal{L}_{\text{IC}} &= \frac{1}{N_{\text{IC}}}\sum_{i} |\psi_\theta(x_i,0) - \psi_0(x_i)|^2, \\
+    \mathcal{L}_{\text{PDE}} &= \frac{1}{N_r}\sum_{j} \left| i\frac{\partial\psi_\theta}{\partial t} + \frac{1}{2}\frac{\partial^2\psi_\theta}{\partial x^2} - V\psi_\theta \right|^2_{(x_j,t_j)}.
+\end{align}
+
+PINN 方法的特点在于无需网格离散化，直接将 PDE 编码为优化目标，但训练收敛速度较慢。该模块还包含与传统数值方法（Split-Step FFT）的误差对比和训练损失收敛分析。
+
+\begin{thebibliography}{9}
+
+\bibitem{leveque2007}
+R.~J.~LeVeque, \textit{Finite Difference Methods for Ordinary and Partial Differential Equations}, SIAM, 2007.
+
+\bibitem{strang1968}
+G.~Strang, ``On the construction and comparison of difference schemes,'' \textit{SIAM J. Numer. Anal.}, vol.~5, no.~3, pp.~506--517, 1968.
+
+\bibitem{sulem1999}
+C.~Sulem and P.~L.~Sulem, \textit{The Nonlinear Schr\"odinger Equation: Self-Focusing and Wave Collapse}, Springer, 1999.
+
+\bibitem{raissi2019}
+M.~Raissi, P.~Perdikaris, and G.~E.~Karniadakis, ``Physics-informed neural networks: A deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations,'' \textit{J. Comput. Phys.}, vol.~378, pp.~686--707, 2019.
+
+\end{thebibliography}
+
+\end{CJK}
+\end{document}
