@@ -1,40 +1,47 @@
-\contentsline {section}{\numberline {1}引言}{2}{section.1}%
-\contentsline {section}{\numberline {2}数学模型与问题描述}{2}{section.2}%
-\contentsline {subsection}{\numberline {2.1}控制方程}{2}{subsection.2.1}%
-\contentsline {subsection}{\numberline {2.2}势场建模}{2}{subsection.2.2}%
-\contentsline {subsection}{\numberline {2.3}初始条件}{3}{subsection.2.3}%
-\contentsline {subsection}{\numberline {2.4}自由粒子高斯波包的解析解}{3}{subsection.2.4}%
-\contentsline {section}{\numberline {3}一维数值方法}{3}{section.3}%
-\contentsline {subsection}{\numberline {3.1}空间离散}{3}{subsection.3.1}%
-\contentsline {subsection}{\numberline {3.2}FTCS 格式（显式向前 Euler）}{3}{subsection.3.2}%
-\contentsline {subsection}{\numberline {3.3}Backward Euler 格式（隐式）}{4}{subsection.3.3}%
-\contentsline {subsection}{\numberline {3.4}Crank--Nicolson 格式（隐式酉格式）}{4}{subsection.3.4}%
-\contentsline {subsection}{\numberline {3.5}RK4 格式（显式四阶 Runge--Kutta）}{4}{subsection.3.5}%
-\contentsline {subsection}{\numberline {3.6}Split-Step Fourier 方法（谱方法）}{4}{subsection.3.6}%
-\contentsline {subsection}{\numberline {3.7}数值格式总览}{5}{subsection.3.7}%
-\contentsline {section}{\numberline {4}二维数值方法}{5}{section.4}%
-\contentsline {subsection}{\numberline {4.1}Split-Step FFT（2D）}{5}{subsection.4.1}%
-\contentsline {subsection}{\numberline {4.2}吸收边界条件}{5}{subsection.4.2}%
-\contentsline {subsection}{\numberline {4.3}数值参数配置}{5}{subsection.4.3}%
-\contentsline {section}{\numberline {5}一维数值实验结果}{6}{section.5}%
-\contentsline {subsection}{\numberline {5.1}解析解对比}{6}{subsection.5.1}%
-\contentsline {subsection}{\numberline {5.2}误差收敛性分析}{6}{subsection.5.2}%
-\contentsline {subsection}{\numberline {5.3}稳定性分析}{7}{subsection.5.3}%
-\contentsline {subsection}{\numberline {5.4}性能对比}{8}{subsection.5.4}%
-\contentsline {subsection}{\numberline {5.5}波包传播动画}{8}{subsection.5.5}%
-\contentsline {subsection}{\numberline {5.6}量子隧穿模拟}{9}{subsection.5.6}%
-\contentsline {subsection}{\numberline {5.7}多格式对比}{9}{subsection.5.7}%
-\contentsline {section}{\numberline {6}二维数值实验结果}{10}{section.6}%
-\contentsline {subsection}{\numberline {6.1}二维自由传播}{10}{subsection.6.1}%
-\contentsline {subsection}{\numberline {6.2}圆形障碍物散射}{11}{subsection.6.2}%
-\contentsline {subsection}{\numberline {6.3}抛物型波导约束传播}{12}{subsection.6.3}%
-\contentsline {section}{\numberline {7}数值分析}{13}{section.7}%
-\contentsline {subsection}{\numberline {7.1}一维质量守恒分析}{13}{subsection.7.1}%
-\contentsline {subsection}{\numberline {7.2}运行时间对比}{14}{subsection.7.2}%
-\contentsline {subsection}{\numberline {7.3}圆形障碍物参数扫描}{14}{subsection.7.3}%
-\contentsline {subsection}{\numberline {7.4}波导强度参数扫描}{15}{subsection.7.4}%
-\contentsline {subsection}{\numberline {7.5}二维收敛性分析}{15}{subsection.7.5}%
-\contentsline {subsection}{\numberline {7.6}二维误差热图}{16}{subsection.7.6}%
-\contentsline {section}{\numberline {8}代码架构}{16}{section.8}%
-\contentsline {section}{\numberline {9}结论}{17}{section.9}%
-\contentsline {section}{\numberline {A}物理信息神经网络（PINN）方法}{18}{appendix.A}%
+\contentsline {section}{\numberline {1}引言}{3}{section.1}%
+\contentsline {subsection}{\numberline {1.1}相关工作}{3}{subsection.1.1}%
+\contentsline {section}{\numberline {2}数学模型与问题描述}{3}{section.2}%
+\contentsline {subsection}{\numberline {2.1}控制方程与无量纲化}{3}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}波函数的物理诠释}{4}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}本征态与定态演化}{4}{subsection.2.3}%
+\contentsline {subsection}{\numberline {2.4}势场建模}{4}{subsection.2.4}%
+\contentsline {subsection}{\numberline {2.5}初始条件}{5}{subsection.2.5}%
+\contentsline {subsection}{\numberline {2.6}自由粒子高斯波包的解析解}{5}{subsection.2.6}%
+\contentsline {section}{\numberline {3}一维数值方法}{5}{section.3}%
+\contentsline {subsection}{\numberline {3.1}空间离散}{5}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}FTCS 格式（显式向前 Euler）}{5}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Backward Euler 格式（隐式）}{6}{subsection.3.3}%
+\contentsline {subsection}{\numberline {3.4}Crank--Nicolson 格式（隐式酉格式）}{6}{subsection.3.4}%
+\contentsline {subsection}{\numberline {3.5}RK4 格式（显式四阶 Runge--Kutta）}{6}{subsection.3.5}%
+\contentsline {subsection}{\numberline {3.6}Split-Step Fourier 方法（谱方法）}{6}{subsection.3.6}%
+\contentsline {subsection}{\numberline {3.7}Von Neumann 稳定性分析}{7}{subsection.3.7}%
+\contentsline {subsection}{\numberline {3.8}截断误差分析}{7}{subsection.3.8}%
+\contentsline {subsection}{\numberline {3.9}Strang 分裂的误差分析}{7}{subsection.3.9}%
+\contentsline {subsection}{\numberline {3.10}数值格式总览}{8}{subsection.3.10}%
+\contentsline {section}{\numberline {4}二维数值方法}{8}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Split-Step FFT（2D）}{8}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}吸收边界条件}{8}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}数值参数配置}{9}{subsection.4.3}%
+\contentsline {section}{\numberline {5}一维数值实验结果}{9}{section.5}%
+\contentsline {subsection}{\numberline {5.1}解析解对比}{9}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}误差收敛性分析}{10}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}稳定性分析}{10}{subsection.5.3}%
+\contentsline {subsection}{\numberline {5.4}性能对比}{11}{subsection.5.4}%
+\contentsline {subsection}{\numberline {5.5}波包传播动画}{11}{subsection.5.5}%
+\contentsline {subsection}{\numberline {5.6}量子隧穿模拟}{12}{subsection.5.6}%
+\contentsline {subsection}{\numberline {5.7}多格式对比}{12}{subsection.5.7}%
+\contentsline {section}{\numberline {6}二维数值实验结果}{13}{section.6}%
+\contentsline {subsection}{\numberline {6.1}二维自由传播}{13}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}圆形障碍物散射}{14}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}抛物型波导约束传播}{14}{subsection.6.3}%
+\contentsline {section}{\numberline {7}数值分析}{15}{section.7}%
+\contentsline {subsection}{\numberline {7.1}一维质量守恒分析}{15}{subsection.7.1}%
+\contentsline {subsection}{\numberline {7.2}运行时间对比}{16}{subsection.7.2}%
+\contentsline {subsection}{\numberline {7.3}圆形障碍物参数扫描}{16}{subsection.7.3}%
+\contentsline {subsection}{\numberline {7.4}波导强度参数扫描}{17}{subsection.7.4}%
+\contentsline {subsection}{\numberline {7.5}二维收敛性分析}{17}{subsection.7.5}%
+\contentsline {subsection}{\numberline {7.6}二维误差热图}{18}{subsection.7.6}%
+\contentsline {section}{\numberline {8}代码架构}{18}{section.8}%
+\contentsline {section}{\numberline {9}结论}{19}{section.9}%
+\contentsline {subsection}{\numberline {9.1}局限性与未来工作}{20}{subsection.9.1}%
+\contentsline {section}{\numberline {A}物理信息神经网络（PINN）方法}{20}{appendix.A}%

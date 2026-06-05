@@ -38,8 +38,10 @@ def mass_2d(psi: Array, dx: float, dy: float) -> float:
 
 
 def l1_l2_linf_error(psi_num: Array, psi_ref: Array, dx: float) -> Tuple[float, float, float]:
-    """Compute L1, L2, and Linf errors between numerical and reference solutions."""
-    diff = psi_num - psi_ref
+    """Compute L1, L2, and Linf errors between numerical and reference solutions,
+    after aligning global phase to eliminate physically irrelevant phase differences."""
+    psi_aligned = align_global_phase(psi_num, psi_ref, dx)
+    diff = psi_aligned - psi_ref
     l1 = float(np.sum(np.abs(diff)) * dx)
     l2 = float(np.sqrt(np.sum(np.abs(diff) ** 2) * dx))
     linf = float(np.max(np.abs(diff)))
@@ -61,11 +63,73 @@ def print_section(title: str) -> None:
     print("=" * 78)
 
 
+def dt_warning(method: str, dx: float, dt: float, vmax: float = 0.0) -> str:
+    """Heuristic stability/accuracy note for the dimensionless TDSE.
+
+    Provides practical guidance on time-step selection for each numerical method.
+    """
+    r = dt / dx**2
+    method_lower = method.lower()
+    if method_lower == "ftcs":
+        return (
+            f"FTCS has amplification > 1 for Schrodinger dynamics; "
+            f"r = dt/dx^2 = {r:.3g}. Use only as an instability demonstration."
+        )
+    if method_lower == "rk4":
+        return (
+            f"RK4 with centered Laplacian is conditionally stable. "
+            f"Heuristic r = dt/dx^2 = {r:.3g}; keep r <= 0.25 for safety."
+        )
+    if method_lower in ("cn", "crank-nicolson", "backward-euler", "be"):
+        return (
+            f"{method} is unconditionally L2-stable for this linear problem, "
+            f"but dt still controls phase accuracy."
+        )
+    if method_lower in ("split-step", "split-step-fft", "fft", "ssf"):
+        return (
+            f"Split-Step FFT is unitary for real V with periodic BCs; "
+            f"accuracy depends on dt and spectral resolution. max(V) = {vmax:.3g}."
+        )
+    return "Unknown method."
+
+
 def grid(xmin: float, xmax: float, n: int) -> Tuple[Array, float]:
     """Create a 1D grid from xmin to xmax with n points (endpoint=False)."""
     x = np.linspace(xmin, xmax, n, endpoint=False)
     dx = float(x[1] - x[0])
     return x, dx
+
+
+def make_2d_grid(
+    nx: int, ny: int,
+    xmin: float, xmax: float,
+    ymin: float, ymax: float,
+) -> Tuple[Array, Array, Array, Array, float, float, Array, Array]:
+    """Set up a 2D periodic grid and matching Fourier frequency arrays.
+
+    Returns (X, Y, x, y, dx, dy, KX, KY) where all 2D arrays use ij-indexing
+    so that psi[ix, iy] corresponds to the point (x[ix], y[iy]).
+
+    Args:
+        nx, ny: Number of grid points in x and y directions.
+        xmin, xmax: Domain boundaries in x.
+        ymin, ymax: Domain boundaries in y.
+
+    Returns:
+        X, Y: 2D meshgrid arrays (ij-indexing).
+        x, y: 1D coordinate arrays.
+        dx, dy: Grid spacings.
+        KX, KY: 2D Fourier wavenumber arrays (ij-indexing).
+    """
+    x = np.linspace(xmin, xmax, nx, endpoint=False)
+    y = np.linspace(ymin, ymax, ny, endpoint=False)
+    dx = float(x[1] - x[0])
+    dy = float(y[1] - y[0])
+    kx_1d = 2.0 * np.pi * np.fft.fftfreq(nx, d=dx)
+    ky_1d = 2.0 * np.pi * np.fft.fftfreq(ny, d=dy)
+    X, Y = np.meshgrid(x, y, indexing="ij")
+    KX, KY = np.meshgrid(kx_1d, ky_1d, indexing="ij")
+    return X, Y, x, y, dx, dy, KX, KY
 
 
 # =============================================================================

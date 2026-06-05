@@ -9,6 +9,9 @@
 \usepackage{booktabs}
 \usepackage{CJKutf8}
 
+% COMPILATION NOTE: Compile THREE times to resolve cross-references.
+%   pdflatex report.tex && pdflatex report.tex && pdflatex report.tex
+
 \graphicspath{{../tdse_outputs/}}
 
 \hypersetup{
@@ -32,7 +35,8 @@
 
 \begin{CJK}{UTF8}{gbsn}
 \title{\textbf{基于线性薛定谔方程的势场中\\波传播与散射数值模拟}}
-\author{Your Name \quad 学号: 12345678 \quad 课程: 数值PDE数值解}
+\author{\texttt{<姓名>} \quad 学号: \texttt{<学号>} \quad 课程: 偏微分方程数值解}
+% TODO: Replace <姓名> and <学号> with your actual name and student ID
 \date{\today}
 
 \begin{document}
@@ -58,29 +62,92 @@
     \item 进行了系统的误差收敛性分析、稳定性分析、质量守恒检验和参数扫描实验。
 \end{itemize}
 
+\subsection{相关工作}
+
+薛定谔方程的数值求解已有数十年的研究历史。
+Kosloff 和 Kosloff~\cite{kosloff1983} 最早将 Fourier 谱方法应用于含时薛定谔方程，
+验证了谱方法在量子动力学模拟中的高效性。
+Taha 和 Ablowitz~\cite{taha1984} 对各种非线性薛定谔方程的数值格式进行了系统比较，
+为后续研究奠定了基准。
+Hardin 和 Tappert~\cite{hardin1973} 提出的分裂步 Fourier 方法（SSFM）
+至今仍是最广泛使用的 TDSE 求解方法之一。
+Fornberg~\cite{fornberg1998} 和 Trefethen~\cite{trefethen2000} 详细阐述了谱方法的理论基础与实际实现。
+在有限差分方面，LeVeque~\cite{leveque2007} 提供了经典的有限差分方法教材，
+Ascher 和 Petzold~\cite{ascher1998} 系统讨论了常微分方程数值方法的稳定性理论。
+近年来，Raissi 等人~\cite{raissi2019} 提出的物理信息神经网络（PINN）
+为 PDE 求解开辟了数据驱动的新范式，本文亦在附录中对其进行了探索性实现。
+
 %==============================================================================
 \section{数学模型与问题描述}
 %==============================================================================
 
-\subsection{控制方程}
+\subsection{控制方程与无量纲化}
 
-考虑无量纲化的线性薛定谔方程。在一维情况下：
+物理含时薛定谔方程为：
+\begin{equation}\label{eq:physical_tdse}
+    i\hbar\frac{\partial\Psi}{\partial \tilde{t}}
+    = -\frac{\hbar^2}{2m}\frac{\partial^2 \Psi}{\partial \tilde{x}^2}
+    + \tilde{V}(\tilde{x})\Psi,
+\end{equation}
+其中 $\hbar$ 为约化普朗克常数，$m$ 为粒子质量，
+$\Psi(\tilde{x},\tilde{t})$ 为物理波函数，$\tilde{V}(\tilde{x})$ 为物理势场。
+
+引入特征长度 $L_0$、特征时间 $T_0 = mL_0^2/\hbar$ 和特征能量 $E_0 = \hbar^2/(mL_0^2)$，
+定义无量纲变量：
+\begin{equation}
+    x = \frac{\tilde{x}}{L_0}, \quad
+    t = \frac{\tilde{t}}{T_0}, \quad
+    \psi(x,t) = \sqrt{L_0}\,\Psi(\tilde{x},\tilde{t}), \quad
+    V(x) = \frac{\tilde{V}(\tilde{x})}{E_0}.
+\end{equation}
+代入 (\ref{eq:physical_tdse}) 并化简，即得无量纲化的一维线性薛定谔方程：
 \begin{equation}\label{eq:tdse1d}
     i\frac{\partial \psi}{\partial t}
     = -\frac{1}{2}\frac{\partial^2 \psi}{\partial x^2} + V(x)\psi,
 \end{equation}
-其中 $\psi(x,t) \in \mathbb{C}$ 为复波函数，$V(x)$ 为实值空间势场，$i$ 为虚数单位。在二维情况下：
+其中 $\psi(x,t) \in \mathbb{C}$ 为复波函数，$V(x)$ 为实值空间势场，
+$i$ 为虚数单位。该无量纲化将所有物理参数吸收到变量尺度中，
+数值实验的结果具有通用性——只需适当选择 $L_0$ 即可映射回任意物理系统。
+
+在二维情况下，无量纲化过程完全类似，得到：
 \begin{equation}\label{eq:tdse2d}
     i\frac{\partial \psi}{\partial t}
-    = -\frac{1}{2}\left(\frac{\partial^2\psi}{\partial x^2} + \frac{\partial^2\psi}{\partial y^2}\right)
+    = -\frac{1}{2}\left(\frac{\partial^2\psi}{\partial x^2}
+    + \frac{\partial^2\psi}{\partial y^2}\right)
     + V(x,y)\psi.
 \end{equation}
 
-方程 (\ref{eq:tdse1d})--(\ref{eq:tdse2d}) 均为保守系统，总概率质量
+方程 (\ref{eq:tdse1d})--(\ref{eq:tdse2d}) 均为保守系统。
+总概率质量
 \begin{equation}
     M(t) = \int |\psi|^2 \, d\mathbf{x}
 \end{equation}
-在精确解中保持守恒，即 $M(t) \equiv 1$。这一性质可作为数值格式保真度的重要检验标准。
+在精确解中保持守恒，即 $M(t) \equiv 1$。
+这一性质源自薛定谔方程的酉演化特性，可作为数值格式保真度的重要检验标准。
+
+\subsection{波函数的物理诠释}
+
+根据 Born 概率诠释，$|\psi(x,t)|^2$ 表示在位置 $x$ 处发现粒子的概率密度。
+波函数的归一化条件 $\int |\psi|^2 dx = 1$ 保证了总概率守恒。
+概率流密度定义为
+\begin{equation}
+    j(x,t) = \operatorname{Im}\left(\psi^* \frac{\partial\psi}{\partial x}\right),
+\end{equation}
+满足连续性方程 $\partial_t|\psi|^2 + \partial_x j = 0$。
+该连续性方程等价于质量守恒 $M(t) = \text{const}$，
+是数值方法需保持的关键物理性质之一。
+
+\subsection{本征态与定态演化}
+
+对于不含时势场 $V(x)$，可通过分离变量法求解：
+$\psi(x,t) = \phi(x)e^{-iEt}$，其中 $\phi(x)$ 满足定态（时间无关）薛定谔方程：
+\begin{equation}
+    -\frac{1}{2}\frac{d^2\phi}{dx^2} + V(x)\phi = E\phi.
+\end{equation}
+定态波函数 $\phi(x)$ 称为哈密顿算符的本征态，$E$ 为对应的本征能量。
+若初始波函数为某一本征态，则精确演化仅产生全局相位旋转：
+$\psi(x,t) = \phi(x)e^{-iEt}$，概率密度 $|\psi|^2$ 不随时间改变。
+这一性质为验证数值格式的相位精度提供了严格基准。
 
 \subsection{势场建模}
 
@@ -186,6 +253,82 @@ Split-Step Fourier 方法（SSFM）利用算符分裂思想，将演化算符分
     \item 对光滑势场和波函数非常高效
 \end{itemize}
 
+\subsection{Von Neumann 稳定性分析}
+
+Von Neumann（Fourier）稳定性分析是评估线性常系数 PDE 差分格式稳定性的标准工具。
+将波函数表示为 Fourier 模态 $\psi_j^n = \xi^n e^{i k j \Delta x}$，
+其中 $\xi$ 为放大因子，$k$ 为实波数，$\lambda_k = 2\sin^2(k\Delta x/2)/\Delta x^2 + V$。
+格式稳定的充要条件为对所有 $k$ 满足 $|\xi(k)| \leq 1$。
+
+对 FTCS 格式，代入得：
+\begin{equation}
+    \xi_{\text{FTCS}} = 1 - i\Delta t\lambda_k,
+    \quad |\xi_{\text{FTCS}}| = \sqrt{1 + \Delta t^2\lambda_k^2} > 1 \;\; \forall k.
+\end{equation}
+故 FTCS 对薛定谔方程\textbf{无条件不稳定}——这与热传导方程中 FTCS 的条件稳定性质形成鲜明对比，
+根源在于薛定谔方程的虚单位导致演化算符的本征值为纯虚数。
+
+对 Backward Euler 格式，放大因子为：
+\begin{equation}
+    \xi_{\text{BE}} = \frac{1}{1 + i\Delta t \lambda_k},
+    \quad |\xi_{\text{BE}}| = \frac{1}{\sqrt{1 + \Delta t^2 \lambda_k^2}} \leq 1.
+\end{equation}
+该格式无条件 $L_2$ 稳定（范数有界），但 $|\xi_{\text{BE}}| < 1$ 对所有 $k$（除 $\lambda_k=0$），
+意味着振幅持续衰减，不保持酉性。
+
+对 Crank--Nicolson 格式，放大因子为：
+\begin{equation}
+    \xi_{\text{CN}} = \frac{1 - i\Delta t \lambda_k/2}{1 + i\Delta t \lambda_k/2},
+    \quad |\xi_{\text{CN}}| = 1 \;\; \forall k.
+\end{equation}
+Crank--Nicolson 格式\textbf{无条件稳定}且\textbf{精确保持酉性}（$|\xi|=1$），
+是有限差分方法中求解线性薛定谔方程的首选格式。
+对 RK4 格式，其放大因子为四阶多项式，稳定性条件需数值求解确定，
+经验表明需满足 $\Delta t/\Delta x^2 \lesssim 0.25$。
+
+\subsection{截断误差分析}
+
+以 Crank--Nicolson 格式为例进行局部截断误差（LTE）分析。
+将精确解在 $(x_j, t_{n+1/2})$ 处 Taylor 展开：
+\begin{align*}
+    \psi_j^{n+1} &= \psi + \frac{\Delta t}{2}\partial_t\psi
+        + \frac{\Delta t^2}{8}\partial_t^2\psi + \mathcal{O}(\Delta t^3), \\
+    \psi_j^n &= \psi - \frac{\Delta t}{2}\partial_t\psi
+        + \frac{\Delta t^2}{8}\partial_t^2\psi + \mathcal{O}(\Delta t^3), \\
+    \frac{\delta_x^2\psi_j}{\Delta x^2} &= \partial_x^2\psi
+        + \frac{\Delta x^2}{12}\partial_x^4\psi + \mathcal{O}(\Delta x^4),
+\end{align*}
+其中 $\delta_x^2\psi_j = \psi_{j-1} - 2\psi_j + \psi_{j+1}$。
+代入 Crank--Nicolson 差分方程并利用 PDE 关系消去时间导数项，
+可得局部截断误差 $\tau = \mathcal{O}(\Delta t^2 + \Delta x^2)$。
+因此 Crank--Nicolson 格式在时间和空间上均具有\textbf{二阶精度}。
+根据 Lax 等价定理——对于适定的线性初值问题，
+相容且稳定的格式必收敛——该格式的全局误差亦以 $\mathcal{O}(\Delta t^2 + \Delta x^2)$ 衰减。
+
+\subsection{Strang 分裂的误差分析}
+
+Split-Step Fourier 方法（SSFM）的精度可由
+Baker--Campbell--Hausdorff（BCH）公式严格分析。
+演化算符为 $e^{-i(T+V)\Delta t} = e^{-iH\Delta t}$，
+其中 $T = -\frac{1}{2}\partial_x^2$ 为动能算符，$V = V(x)$ 为势能算符。
+Strang 分裂在每一步 $\Delta t$ 内采用对称分解：
+\begin{equation}
+    e^{-i(T+V)\Delta t}
+    = e^{-iV\Delta t/2}\, e^{-iT\Delta t}\, e^{-iV\Delta t/2}
+    + \mathcal{O}(\Delta t^3).
+\end{equation}
+展开 BCH 公式 $e^{A}e^{B} = \exp(A + B + \frac{1}{2}[A,B] + \cdots)$，
+取 $A = -iV\Delta t/2$，$B = -iT\Delta t$。
+虽然对易子 $[V,T] \neq 0$，但 Strang 分裂的对称结构使一阶对易子项在 BCH 级数中相互抵消。
+领先误差项为 $\mathcal{O}(\Delta t^3)$ 的二重对易子项（含 $[V,[V,T]]$ 和 $[T,[T,V]]$），
+故\textbf{Strang 分裂在时间上具有二阶精度 $\mathcal{O}(\Delta t^2)$}。
+
+SSFM 的空间精度由 Fourier 谱方法决定：
+对光滑函数，谱插值误差随 $\Delta x$ 呈指数衰减（$\mathcal{O}(e^{-c/\Delta x})$），
+远优于有限差分的代数收敛（$\mathcal{O}(\Delta x^p)$）。
+但在实际计算中，时间离散误差通常主导总误差，
+因此总体精度仍受 $\mathcal{O}(\Delta t^2)$ 的限制。
+
 \subsection{数值格式总览}
 
 表~\ref{tab:methods} 汇总了五种一维数值格式的关键性质。
@@ -273,7 +416,7 @@ dpi（图像）      & $300$              & $300$ \\
 
 \subsection{误差收敛性分析}
 
-图~\ref{fig:1d_convergence} 展示了 Crank--Nicolson、Split-Step FFT 和 RK4 三种格式的 $L_2$ 误差随网格间距 $\Delta x$ 的收敛行为。在双对数坐标下，误差曲线近似为直线，通过最小二乘拟合得到收敛阶数 $p$。
+图~\ref{fig:1d_convergence} 展示了 Crank--Nicolson、Split-Step FFT 和 RK4 三种格式的 $L_2$ 误差随网格间距 $\Delta x$ 的收敛行为。在双对数坐标下，误差曲线近似为直线，通过最小二乘拟合得到收敛阶数 $p$。数值实验表明：Crank--Nicolson 和 RK4 的收敛阶约为 $p \approx 1.71$（空间二阶精度在有限时间步长下的体现），Split-Step FFT 的收敛阶高达 $p \approx 15.8$（谱精度的体现，误差在粗网格上即接近机器精度 $\sim 10^{-14}$，之后趋于平坦）。
 
 \begin{figure}[H]
 \centering
@@ -500,6 +643,28 @@ def step_split_step_fft_2d(
     \item 项目的模块化设计使得代码具有良好的可扩展性和可维护性，求解器工厂类和势场工厂类提供了统一的接口，便于添加新的数值格式和物理场景。
 \end{enumerate}
 
+\subsection{局限性与未来工作}
+
+尽管本文取得了较为系统的数值实验结果，但仍存在以下局限和可改进方向：
+\begin{itemize}
+    \item \textbf{非线性扩展}：所有数值实验限于线性薛定谔方程。
+    实际应用中，非线性薛定谔方程（NLSE，如 Gross--Pitaevskii 方程中的 $|\psi|^2\psi$ 项）
+    和耦合薛定谔方程组是重要的推广方向，对数值方法的守恒性和稳定性提出了更高要求。
+    \item \textbf{网格适应性}：一维空间离散采用均匀网格，
+    对具有多尺度特征（如尖锐势垒、局域化波包）的势场效率较低。
+    可考虑引入自适应网格细化（AMR）或移动网格方法以提高分辨率效率。
+    \item \textbf{计算规模}：二维模拟的计算量随网格点数二次增长
+    （$\mathcal{O}(N_x N_y)$），对于大规模三维模拟
+    （$\mathcal{O}(N_x N_y N_z)$）需引入 GPU 加速或 MPI 并行计算。
+    \item \textbf{边界条件}：吸收边界条件虽有效抑制周期性回绕，
+    但并非严格的透明边界条件，可能引入微小的数值反射。
+    完美匹配层（PML）或精确非反射边界条件（NRBC）是更精确的替代方案。
+    \item \textbf{PINN 方法}：附录中的 PINN 实现仅作为概念验证，
+    其精度和效率目前远不及传统数值方法。
+    未来可通过改进网络架构（如 Fourier 特征网络）、
+    自适应采样策略和多保真度学习来缩小差距。
+\end{itemize}
+
 %==============================================================================
 \appendix
 \section{物理信息神经网络（PINN）方法}
@@ -521,19 +686,43 @@ def step_split_step_fft_2d(
 
 PINN 方法的特点在于无需网格离散化，直接将 PDE 编码为优化目标，但训练收敛速度较慢。该模块还包含与传统数值方法（Split-Step FFT）的误差对比和训练损失收敛分析。
 
-\begin{thebibliography}{9}
+\begin{thebibliography}{99}
+
+\bibitem{griffiths2005}
+D.~J.~Griffiths, \textit{Introduction to Quantum Mechanics}, 2nd ed., Pearson, 2005.
 
 \bibitem{leveque2007}
 R.~J.~LeVeque, \textit{Finite Difference Methods for Ordinary and Partial Differential Equations}, SIAM, 2007.
 
+\bibitem{trefethen2000}
+L.~N.~Trefethen, \textit{Spectral Methods in MATLAB}, SIAM, 2000.
+
+\bibitem{fornberg1998}
+B.~Fornberg, \textit{A Practical Guide to Pseudospectral Methods}, Cambridge University Press, 1998.
+
+\bibitem{ascher1998}
+U.~M.~Ascher and L.~R.~Petzold, \textit{Computer Methods for Ordinary Differential Equations and Differential-Algebraic Equations}, SIAM, 1998.
+
 \bibitem{strang1968}
 G.~Strang, ``On the construction and comparison of difference schemes,'' \textit{SIAM J. Numer. Anal.}, vol.~5, no.~3, pp.~506--517, 1968.
+
+\bibitem{hardin1973}
+R.~H.~Hardin and F.~D.~Tappert, ``Applications of the split-step Fourier method to the numerical solution of nonlinear and variable coefficient wave equations,'' \textit{SIAM Rev.}, vol.~15, p.~423, 1973.
+
+\bibitem{kosloff1983}
+D.~Kosloff and R.~Kosloff, ``A Fourier method solution for the time dependent Schr\"odinger equation as a tool in molecular dynamics,'' \textit{J. Comput. Phys.}, vol.~52, no.~1, pp.~35--53, 1983.
+
+\bibitem{taha1984}
+T.~R.~Taha and M.~J.~Ablowitz, ``Analytical and numerical aspects of certain nonlinear evolution equations. II. Numerical, nonlinear Schr\"odinger equation,'' \textit{J. Comput. Phys.}, vol.~55, no.~2, pp.~203--230, 1984.
 
 \bibitem{sulem1999}
 C.~Sulem and P.~L.~Sulem, \textit{The Nonlinear Schr\"odinger Equation: Self-Focusing and Wave Collapse}, Springer, 1999.
 
 \bibitem{raissi2019}
 M.~Raissi, P.~Perdikaris, and G.~E.~Karniadakis, ``Physics-informed neural networks: A deep learning framework for solving forward and inverse problems involving nonlinear partial differential equations,'' \textit{J. Comput. Phys.}, vol.~378, pp.~686--707, 2019.
+
+\bibitem{thaller1999}
+B.~Thaller, \textit{Visual Quantum Mechanics}, Springer, 1999.
 
 \end{thebibliography}
 

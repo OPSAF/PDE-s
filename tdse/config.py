@@ -114,18 +114,38 @@ def setup_plot_style(dpi: int = 300) -> None:
     plt.rcParams['savefig.pad_inches'] = 0.2  # Increased padding to prevent cutoff
     plt.rcParams['savefig.format'] = 'png'
 
+    # Image display settings
+    plt.rcParams['image.cmap'] = 'inferno'
+    plt.rcParams['image.interpolation'] = 'bilinear'
+
     # Grid styling - subtle but visible
     plt.rcParams['grid.alpha'] = 0.3
     plt.rcParams['grid.linewidth'] = 0.5
     plt.rcParams['grid.color'] = '#CCCCCC'
 
-    # Professional color palette with good distinguishability
+    # Professional color palette with good distinguishability (8 colors)
     plt.rcParams['axes.prop_cycle'] = plt.cycler(
         'color', [
-            '#2E86AB', '#A23B72', '#F18F01',
-            '#C73E1D', '#3B1F2B', '#95C623'
+            '#2E86AB', '#A23B72', '#F18F01', '#C73E1D',
+            '#3B1F2B', '#95C623', '#6B4C9A', '#1B998B',
         ]
     )
+
+    # Spine styling - clean look
+    plt.rcParams['axes.spines.top'] = False
+    plt.rcParams['axes.spines.right'] = False
+
+    # Tick styling
+    plt.rcParams['xtick.direction'] = 'out'
+    plt.rcParams['ytick.direction'] = 'out'
+    plt.rcParams['xtick.major.width'] = 1.0
+    plt.rcParams['ytick.major.width'] = 1.0
+
+    # Legend styling
+    plt.rcParams['legend.frameon'] = True
+    plt.rcParams['legend.fancybox'] = True
+    plt.rcParams['legend.framealpha'] = 0.9
+    plt.rcParams['legend.edgecolor'] = '#CCCCCC'
 
     # Layout adjustments - prevent label cutoff and text overlap
     plt.rcParams['figure.autolayout'] = False

@@ -2,92 +2,116 @@
 \providecommand\hyper@newdestlabel[2]{}
 \providecommand\HyField@AuxAddToFields[1]{}
 \providecommand\HyField@AuxAddToCoFields[2]{}
-\@writefile{toc}{\contentsline {section}{\numberline {1}引言}{2}{section.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {2}数学模型与问题描述}{2}{section.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}控制方程}{2}{subsection.2.1}\protected@file@percent }
-\newlabel{eq:tdse1d}{{1}{2}{控制方程}{equation.2.1}{}}
-\newlabel{eq:tdse2d}{{2}{2}{控制方程}{equation.2.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}势场建模}{2}{subsection.2.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}初始条件}{3}{subsection.2.3}\protected@file@percent }
-\newlabel{eq:gaussian1d}{{4}{3}{初始条件}{equation.2.4}{}}
-\newlabel{eq:gaussian2d}{{5}{3}{初始条件}{equation.2.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}自由粒子高斯波包的解析解}{3}{subsection.2.4}\protected@file@percent }
-\newlabel{eq:exact1d}{{6}{3}{自由粒子高斯波包的解析解}{equation.2.6}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {3}一维数值方法}{3}{section.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}空间离散}{3}{subsection.3.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}FTCS 格式（显式向前 Euler）}{3}{subsection.3.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Backward Euler 格式（隐式）}{4}{subsection.3.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Crank--Nicolson 格式（隐式酉格式）}{4}{subsection.3.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.5}RK4 格式（显式四阶 Runge--Kutta）}{4}{subsection.3.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.6}Split-Step Fourier 方法（谱方法）}{4}{subsection.3.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.7}数值格式总览}{5}{subsection.3.7}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces 一维数值格式性质汇总}}{5}{table.caption.2}\protected@file@percent }
+\citation{kosloff1983}
+\citation{taha1984}
+\citation{hardin1973}
+\citation{fornberg1998}
+\citation{trefethen2000}
+\citation{leveque2007}
+\citation{ascher1998}
+\citation{raissi2019}
+\@writefile{toc}{\contentsline {section}{\numberline {1}引言}{3}{section.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1}相关工作}{3}{subsection.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2}数学模型与问题描述}{3}{section.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}控制方程与无量纲化}{3}{subsection.2.1}\protected@file@percent }
+\newlabel{eq:physical_tdse}{{1}{3}{控制方程与无量纲化}{equation.1}{}}
+\newlabel{eq:tdse1d}{{3}{3}{控制方程与无量纲化}{equation.3}{}}
+\newlabel{eq:tdse2d}{{4}{4}{控制方程与无量纲化}{equation.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}波函数的物理诠释}{4}{subsection.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}本征态与定态演化}{4}{subsection.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}势场建模}{4}{subsection.2.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.5}初始条件}{5}{subsection.2.5}\protected@file@percent }
+\newlabel{eq:gaussian1d}{{8}{5}{初始条件}{equation.8}{}}
+\newlabel{eq:gaussian2d}{{9}{5}{初始条件}{equation.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.6}自由粒子高斯波包的解析解}{5}{subsection.2.6}\protected@file@percent }
+\newlabel{eq:exact1d}{{10}{5}{自由粒子高斯波包的解析解}{equation.10}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}一维数值方法}{5}{section.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}空间离散}{5}{subsection.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}FTCS 格式（显式向前 Euler）}{5}{subsection.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Backward Euler 格式（隐式）}{6}{subsection.3.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Crank--Nicolson 格式（隐式酉格式）}{6}{subsection.3.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5}RK4 格式（显式四阶 Runge--Kutta）}{6}{subsection.3.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.6}Split-Step Fourier 方法（谱方法）}{6}{subsection.3.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.7}Von Neumann 稳定性分析}{7}{subsection.3.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.8}截断误差分析}{7}{subsection.3.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.9}Strang 分裂的误差分析}{7}{subsection.3.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.10}数值格式总览}{8}{subsection.3.10}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces 一维数值格式性质汇总}}{8}{table.caption.2}\protected@file@percent }
 \providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
-\newlabel{tab:methods}{{1}{5}{一维数值格式性质汇总}{table.caption.2}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {4}二维数值方法}{5}{section.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Split-Step FFT（2D）}{5}{subsection.4.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}吸收边界条件}{5}{subsection.4.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}数值参数配置}{5}{subsection.4.3}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces 数值模拟默认参数配置}}{6}{table.caption.3}\protected@file@percent }
-\newlabel{tab:config}{{2}{6}{数值模拟默认参数配置}{table.caption.3}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5}一维数值实验结果}{6}{section.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}解析解对比}{6}{subsection.5.1}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces 一维解析解与数值解对比：上排为自由高斯波包的 $|\psi |^2$ 分布及 $L_2$ 误差对比；下排为无限深势阱本征态（$n=2$）和谐振子本征态（$n=1$）的 Crank--Nicolson 演化验证}}{6}{figure.caption.4}\protected@file@percent }
-\newlabel{fig:1d_analytic}{{1}{6}{一维解析解与数值解对比：上排为自由高斯波包的 $|\psi |^2$ 分布及 $L_2$ 误差对比；下排为无限深势阱本征态（$n=2$）和谐振子本征态（$n=1$）的 Crank--Nicolson 演化验证}{figure.caption.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}误差收敛性分析}{6}{subsection.5.2}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces 一维 $L_2$ 误差收敛性分析：三种格式的误差随网格间距 $\Delta x$ 的变化（双对数坐标），图中标注了拟合的收敛阶数 $p$}}{7}{figure.caption.5}\protected@file@percent }
-\newlabel{fig:1d_convergence}{{2}{7}{一维 $L_2$ 误差收敛性分析：三种格式的误差随网格间距 $\Delta x$ 的变化（双对数坐标），图中标注了拟合的收敛阶数 $p$}{figure.caption.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}稳定性分析}{7}{subsection.5.3}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces 稳定性扫描图：五种格式在不同 $(N, \Delta t)$ 组合下的稳定性（绿色=稳定，红色=发散）}}{8}{figure.caption.6}\protected@file@percent }
-\newlabel{fig:1d_stability}{{3}{8}{稳定性扫描图：五种格式在不同 $(N, \Delta t)$ 组合下的稳定性（绿色=稳定，红色=发散）}{figure.caption.6}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.4}性能对比}{8}{subsection.5.4}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces 一维格式运行时间对比表}}{8}{figure.caption.7}\protected@file@percent }
-\newlabel{fig:1d_performance}{{4}{8}{一维格式运行时间对比表}{figure.caption.7}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.5}波包传播动画}{8}{subsection.5.5}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces 一维自由高斯波包 Split-Step FFT 演化末帧（$t=3.0$），虚线为精确解}}{9}{figure.caption.8}\protected@file@percent }
-\newlabel{fig:1d_wavepacket}{{5}{9}{一维自由高斯波包 Split-Step FFT 演化末帧（$t=3.0$），虚线为精确解}{figure.caption.8}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.6}量子隧穿模拟}{9}{subsection.5.6}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces 量子隧穿模拟：三种能量情形下波包与矩形势垒的相互作用，右下为透射/反射概率对比}}{9}{figure.caption.9}\protected@file@percent }
-\newlabel{fig:1d_tunneling}{{6}{9}{量子隧穿模拟：三种能量情形下波包与矩形势垒的相互作用，右下为透射/反射概率对比}{figure.caption.9}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.7}多格式对比}{9}{subsection.5.7}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces 五种一维格式在弱谐振子势中的演化对比}}{10}{figure.caption.10}\protected@file@percent }
-\newlabel{fig:1d_method_cmp}{{7}{10}{五种一维格式在弱谐振子势中的演化对比}{figure.caption.10}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {6}二维数值实验结果}{10}{section.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}二维自由传播}{10}{subsection.6.1}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces 二维自由高斯波包传播：三个时刻的密度热图及质量守恒验证}}{11}{figure.caption.11}\protected@file@percent }
-\newlabel{fig:2d_free}{{8}{11}{二维自由高斯波包传播：三个时刻的密度热图及质量守恒验证}{figure.caption.11}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}圆形障碍物散射}{11}{subsection.6.2}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces 二维圆形障碍物散射：初始、接近和散射三个时刻的密度分布及散射角分布}}{12}{figure.caption.12}\protected@file@percent }
-\newlabel{fig:2d_scatter}{{9}{12}{二维圆形障碍物散射：初始、接近和散射三个时刻的密度分布及散射角分布}{figure.caption.12}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}抛物型波导约束传播}{12}{subsection.6.3}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces 二维波导约束传播：自由传播与波导约束的密度热图对比及横向束流剖面}}{13}{figure.caption.13}\protected@file@percent }
-\newlabel{fig:2d_waveguide}{{10}{13}{二维波导约束传播：自由传播与波导约束的密度热图对比及横向束流剖面}{figure.caption.13}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {7}数值分析}{13}{section.7}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}一维质量守恒分析}{13}{subsection.7.1}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces 一维质量守恒分析：三种格式的质量误差 $|M(t)-M(0)|$ 随时间变化（半对数坐标）}}{14}{figure.caption.14}\protected@file@percent }
-\newlabel{fig:conservation}{{11}{14}{一维质量守恒分析：三种格式的质量误差 $|M(t)-M(0)|$ 随时间变化（半对数坐标）}{figure.caption.14}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}运行时间对比}{14}{subsection.7.2}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces 一维格式运行时间及质量守恒详细对比表}}{14}{figure.caption.15}\protected@file@percent }
-\newlabel{fig:runtime}{{12}{14}{一维格式运行时间及质量守恒详细对比表}{figure.caption.15}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.3}圆形障碍物参数扫描}{14}{subsection.7.3}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces 圆形障碍物半径参数扫描：透射与散射质量随半径的变化}}{15}{figure.caption.16}\protected@file@percent }
-\newlabel{fig:circular_sweep}{{13}{15}{圆形障碍物半径参数扫描：透射与散射质量随半径的变化}{figure.caption.16}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.4}波导强度参数扫描}{15}{subsection.7.4}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {14}{\ignorespaces 波导强度参数扫描：波束横向展宽 $\sigma _y$ 随波导强度 $\alpha $ 的变化}}{15}{figure.caption.17}\protected@file@percent }
-\newlabel{fig:waveguide_sweep}{{14}{15}{波导强度参数扫描：波束横向展宽 $\sigma _y$ 随波导强度 $\alpha $ 的变化}{figure.caption.17}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.5}二维收敛性分析}{15}{subsection.7.5}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {15}{\ignorespaces 二维收敛性分析：误差随网格点数变化（双对数）、质量守恒误差及不同网格规模的质量对比}}{16}{figure.caption.18}\protected@file@percent }
-\newlabel{fig:2d_convergence}{{15}{16}{二维收敛性分析：误差随网格点数变化（双对数）、质量守恒误差及不同网格规模的质量对比}{figure.caption.18}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.6}二维误差热图}{16}{subsection.7.6}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {16}{\ignorespaces 二维误差热图：数值解、解析解及逐点绝对误差分布}}{16}{figure.caption.19}\protected@file@percent }
-\newlabel{fig:2d_error}{{16}{16}{二维误差热图：数值解、解析解及逐点绝对误差分布}{figure.caption.19}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {8}代码架构}{16}{section.8}\protected@file@percent }
-\newlabel{lst:ssf2d}{{1}{17}{二维 Split-Step FFT 核心实现（tdse/solvers.py）}{lstlisting.1}{}}
-\@writefile{lol}{\contentsline {lstlisting}{\numberline {1}{\ignorespaces 二维 Split-Step FFT 核心实现（tdse/solvers.py）}}{17}{lstlisting.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {9}结论}{17}{section.9}\protected@file@percent }
-\bibcite{leveque2007}{1}
-\bibcite{strang1968}{2}
-\bibcite{sulem1999}{3}
-\bibcite{raissi2019}{4}
-\@writefile{toc}{\contentsline {section}{\numberline {A}物理信息神经网络（PINN）方法}{18}{appendix.A}\protected@file@percent }
-\gdef \@abspage@last{18}
+\newlabel{tab:methods}{{1}{8}{一维数值格式性质汇总}{table.caption.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}二维数值方法}{8}{section.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Split-Step FFT（2D）}{8}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}吸收边界条件}{8}{subsection.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}数值参数配置}{9}{subsection.4.3}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces 数值模拟默认参数配置}}{9}{table.caption.3}\protected@file@percent }
+\newlabel{tab:config}{{2}{9}{数值模拟默认参数配置}{table.caption.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}一维数值实验结果}{9}{section.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}解析解对比}{9}{subsection.5.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces 一维解析解与数值解对比：上排为自由高斯波包的 $|\psi |^2$ 分布及 $L_2$ 误差对比；下排为无限深势阱本征态（$n=2$）和谐振子本征态（$n=1$）的 Crank--Nicolson 演化验证}}{9}{figure.caption.4}\protected@file@percent }
+\newlabel{fig:1d_analytic}{{1}{9}{一维解析解与数值解对比：上排为自由高斯波包的 $|\psi |^2$ 分布及 $L_2$ 误差对比；下排为无限深势阱本征态（$n=2$）和谐振子本征态（$n=1$）的 Crank--Nicolson 演化验证}{figure.caption.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}误差收敛性分析}{10}{subsection.5.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces 一维 $L_2$ 误差收敛性分析：三种格式的误差随网格间距 $\Delta x$ 的变化（双对数坐标），图中标注了拟合的收敛阶数 $p$}}{10}{figure.caption.5}\protected@file@percent }
+\newlabel{fig:1d_convergence}{{2}{10}{一维 $L_2$ 误差收敛性分析：三种格式的误差随网格间距 $\Delta x$ 的变化（双对数坐标），图中标注了拟合的收敛阶数 $p$}{figure.caption.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}稳定性分析}{10}{subsection.5.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces 稳定性扫描图：五种格式在不同 $(N, \Delta t)$ 组合下的稳定性（绿色=稳定，红色=发散）}}{11}{figure.caption.6}\protected@file@percent }
+\newlabel{fig:1d_stability}{{3}{11}{稳定性扫描图：五种格式在不同 $(N, \Delta t)$ 组合下的稳定性（绿色=稳定，红色=发散）}{figure.caption.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4}性能对比}{11}{subsection.5.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces 一维格式运行时间对比表}}{11}{figure.caption.7}\protected@file@percent }
+\newlabel{fig:1d_performance}{{4}{11}{一维格式运行时间对比表}{figure.caption.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.5}波包传播动画}{11}{subsection.5.5}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces 一维自由高斯波包 Split-Step FFT 演化末帧（$t=3.0$），虚线为精确解}}{12}{figure.caption.8}\protected@file@percent }
+\newlabel{fig:1d_wavepacket}{{5}{12}{一维自由高斯波包 Split-Step FFT 演化末帧（$t=3.0$），虚线为精确解}{figure.caption.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.6}量子隧穿模拟}{12}{subsection.5.6}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces 量子隧穿模拟：三种能量情形下波包与矩形势垒的相互作用，右下为透射/反射概率对比}}{12}{figure.caption.9}\protected@file@percent }
+\newlabel{fig:1d_tunneling}{{6}{12}{量子隧穿模拟：三种能量情形下波包与矩形势垒的相互作用，右下为透射/反射概率对比}{figure.caption.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.7}多格式对比}{12}{subsection.5.7}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces 五种一维格式在弱谐振子势中的演化对比}}{13}{figure.caption.10}\protected@file@percent }
+\newlabel{fig:1d_method_cmp}{{7}{13}{五种一维格式在弱谐振子势中的演化对比}{figure.caption.10}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}二维数值实验结果}{13}{section.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}二维自由传播}{13}{subsection.6.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces 二维自由高斯波包传播：三个时刻的密度热图及质量守恒验证}}{13}{figure.caption.11}\protected@file@percent }
+\newlabel{fig:2d_free}{{8}{13}{二维自由高斯波包传播：三个时刻的密度热图及质量守恒验证}{figure.caption.11}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}圆形障碍物散射}{14}{subsection.6.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces 二维圆形障碍物散射：初始、接近和散射三个时刻的密度分布及散射角分布}}{14}{figure.caption.12}\protected@file@percent }
+\newlabel{fig:2d_scatter}{{9}{14}{二维圆形障碍物散射：初始、接近和散射三个时刻的密度分布及散射角分布}{figure.caption.12}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}抛物型波导约束传播}{14}{subsection.6.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces 二维波导约束传播：自由传播与波导约束的密度热图对比及横向束流剖面}}{15}{figure.caption.13}\protected@file@percent }
+\newlabel{fig:2d_waveguide}{{10}{15}{二维波导约束传播：自由传播与波导约束的密度热图对比及横向束流剖面}{figure.caption.13}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}数值分析}{15}{section.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}一维质量守恒分析}{15}{subsection.7.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces 一维质量守恒分析：三种格式的质量误差 $|M(t)-M(0)|$ 随时间变化（半对数坐标）}}{16}{figure.caption.14}\protected@file@percent }
+\newlabel{fig:conservation}{{11}{16}{一维质量守恒分析：三种格式的质量误差 $|M(t)-M(0)|$ 随时间变化（半对数坐标）}{figure.caption.14}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}运行时间对比}{16}{subsection.7.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces 一维格式运行时间及质量守恒详细对比表}}{16}{figure.caption.15}\protected@file@percent }
+\newlabel{fig:runtime}{{12}{16}{一维格式运行时间及质量守恒详细对比表}{figure.caption.15}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.3}圆形障碍物参数扫描}{16}{subsection.7.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces 圆形障碍物半径参数扫描：透射与散射质量随半径的变化}}{17}{figure.caption.16}\protected@file@percent }
+\newlabel{fig:circular_sweep}{{13}{17}{圆形障碍物半径参数扫描：透射与散射质量随半径的变化}{figure.caption.16}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.4}波导强度参数扫描}{17}{subsection.7.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {14}{\ignorespaces 波导强度参数扫描：波束横向展宽 $\sigma _y$ 随波导强度 $\alpha $ 的变化}}{17}{figure.caption.17}\protected@file@percent }
+\newlabel{fig:waveguide_sweep}{{14}{17}{波导强度参数扫描：波束横向展宽 $\sigma _y$ 随波导强度 $\alpha $ 的变化}{figure.caption.17}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.5}二维收敛性分析}{17}{subsection.7.5}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {15}{\ignorespaces 二维收敛性分析：误差随网格点数变化（双对数）、质量守恒误差及不同网格规模的质量对比}}{18}{figure.caption.18}\protected@file@percent }
+\newlabel{fig:2d_convergence}{{15}{18}{二维收敛性分析：误差随网格点数变化（双对数）、质量守恒误差及不同网格规模的质量对比}{figure.caption.18}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.6}二维误差热图}{18}{subsection.7.6}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {16}{\ignorespaces 二维误差热图：数值解、解析解及逐点绝对误差分布}}{18}{figure.caption.19}\protected@file@percent }
+\newlabel{fig:2d_error}{{16}{18}{二维误差热图：数值解、解析解及逐点绝对误差分布}{figure.caption.19}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {8}代码架构}{18}{section.8}\protected@file@percent }
+\newlabel{lst:ssf2d}{{1}{19}{二维 Split-Step FFT 核心实现（tdse/solvers.py）}{lstlisting.1}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {1}{\ignorespaces 二维 Split-Step FFT 核心实现（tdse/solvers.py）}}{19}{lstlisting.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {9}结论}{19}{section.9}\protected@file@percent }
+\bibcite{griffiths2005}{1}
+\bibcite{leveque2007}{2}
+\bibcite{trefethen2000}{3}
+\bibcite{fornberg1998}{4}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.1}局限性与未来工作}{20}{subsection.9.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {A}物理信息神经网络（PINN）方法}{20}{appendix.A}\protected@file@percent }
+\bibcite{ascher1998}{5}
+\bibcite{strang1968}{6}
+\bibcite{hardin1973}{7}
+\bibcite{kosloff1983}{8}
+\bibcite{taha1984}{9}
+\bibcite{sulem1999}{10}
+\bibcite{raissi2019}{11}
+\bibcite{thaller1999}{12}
+\gdef \@abspage@last{21}
