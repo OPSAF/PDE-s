@@ -255,7 +255,7 @@ def save_wavepacket_animation(cfg: RunConfig, x: Array, psi_hist: Array,
         return (line,)
 
     ani = FuncAnimation(fig, update, frames=len(saved_t), init_func=init, blit=True)
-    ani.save(os.path.join(cfg.outdir, filename), writer=PillowWriter(fps=20), dpi=150)
+    ani.save(os.path.join(cfg.outdir, filename), writer=PillowWriter(fps=20), dpi=min(cfg.dpi, 300))
     plt.close(fig)
 
 
@@ -292,7 +292,7 @@ def save_tunneling_animation(cfg: RunConfig, x: Array, v: Array,
 
     ani = FuncAnimation(fig, update, frames=len(saved_t), init_func=init, blit=True)
     ani.save(os.path.join(cfg.outdir, "figure6_tunneling_animation.gif"), 
-            writer=PillowWriter(fps=20), dpi=150)
+            writer=PillowWriter(fps=20), dpi=min(cfg.dpi, 300))
     plt.close(fig)
 
 
@@ -352,6 +352,6 @@ def save_2d_animation(
         return (im,)
 
     ani = FuncAnimation(fig, update, frames=len(saved_t), init_func=init, blit=True)
-    ani.save(os.path.join(cfg.outdir, filename), writer=PillowWriter(fps=20), dpi=150)
+    ani.save(os.path.join(cfg.outdir, filename), writer=PillowWriter(fps=20), dpi=min(cfg.dpi, 300))
     plt.close(fig)
 

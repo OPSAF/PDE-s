@@ -49,6 +49,7 @@ from .potentials import (
     potential_free,
     potential_harmonic,
     potential_rect_barrier,
+    potential_double_barrier,
     potential_circle_2d,
     potential_waveguide_2d,
     absorbing_potential_2d,
@@ -91,9 +92,11 @@ def experiment_analytic_vs_numerical(cfg: RunConfig) -> pd.DataFrame:
     methods = ["FTCS", "Backward-Euler", "Crank-Nicolson", "Split-Step-FFT", "RK4"]
     rows = []
 
-    fig, axes = plt.subplots(2, 2, figsize=(14, 10), constrained_layout=True)
+    fig, axes = plt.subplots(2, 3, figsize=(22, 12), constrained_layout=True)
     psi_exact = exact_free_gaussian(x, t_end, x0, sigma, k0, dx)
     axes[0, 0].plot(x, np.abs(psi_exact) ** 2, "k--", lw=2.5, label="Exact", alpha=0.8)
+    axes[0, 1].plot(x, np.real(psi_exact), "k--", lw=2.5, label="Exact", alpha=0.8)
+    axes[0, 2].plot(x, np.imag(psi_exact), "k--", lw=2.5, label="Exact", alpha=0.8)
 
     for method in tqdm(methods, desc="analytic comparison"):
         start = time.perf_counter()
@@ -107,24 +110,40 @@ def experiment_analytic_vs_numerical(cfg: RunConfig) -> pd.DataFrame:
             "runtime_s": runtime, "L1": l1, "L2": l2, "Linf": linf, "mass": mass,
         })
         if method != "FTCS":
-            axes[0, 0].plot(x, np.abs(psi_num) ** 2, lw=1.8, label=method)
+            axes[0, 0].plot(x, np.abs(psi_num) ** 2, lw=1.5, label=method)
+            axes[0, 1].plot(x, np.real(psi_num), lw=1.5, label=method)
+            axes[0, 2].plot(x, np.imag(psi_num), lw=1.5, label=method)
 
-    axes[0, 0].set_title("Free Gaussian: |ψ|² at Final Time", fontweight='bold', pad=10)
+    # Top row: the "three lines" — |ψ|², Re[ψ], Im[ψ]
+    axes[0, 0].set_title("Probability Density |ψ|²", fontweight='bold', pad=10)
     axes[0, 0].set_xlabel("Position x", labelpad=8)
-    axes[0, 0].set_ylabel("Probability Density |ψ|²", labelpad=8)
-    axes[0, 0].legend(fontsize=9, loc='upper right', framealpha=0.95)
+    axes[0, 0].set_ylabel("|ψ|²", labelpad=8)
     axes[0, 0].set_xlim(-15, 5)
     axes[0, 0].grid(True, alpha=0.3)
 
+    axes[0, 1].set_title("Real Part Re[ψ]", fontweight='bold', pad=10)
+    axes[0, 1].set_xlabel("Position x", labelpad=8)
+    axes[0, 1].set_ylabel("Re[ψ]", labelpad=8)
+    axes[0, 1].set_xlim(-15, 5)
+    axes[0, 1].grid(True, alpha=0.3)
+
+    axes[0, 2].set_title("Imaginary Part Im[ψ]", fontweight='bold', pad=10)
+    axes[0, 2].set_xlabel("Position x", labelpad=8)
+    axes[0, 2].set_ylabel("Im[ψ]", labelpad=8)
+    axes[0, 2].set_xlim(-15, 5)
+    axes[0, 2].legend(fontsize=8, loc='upper right', framealpha=0.95)
+    axes[0, 2].grid(True, alpha=0.3)
+
+    # Bottom row: error analysis and eigenstate verifications
     l2_values = [r["L2"] for r in rows]
     colors = ['#C73E1D', '#A23B72', '#2E86AB', '#F18F01', '#3B1F2B']
-    axes[0, 1].bar([r["method"] for r in rows], l2_values, color=colors,
+    axes[1, 0].bar([r["method"] for r in rows], l2_values, color=colors,
                    alpha=0.8, edgecolor='white', linewidth=0.5)
-    axes[0, 1].set_yscale("log")
-    axes[0, 1].set_title("L₂ Error vs Exact Gaussian", fontweight='bold', pad=10)
-    axes[0, 1].set_xlabel("Numerical Method", labelpad=8)
-    axes[0, 1].set_ylabel("L₂ Error (log scale)", labelpad=8)
-    axes[0, 1].tick_params(axis="x", rotation=35)
+    axes[1, 0].set_yscale("log")
+    axes[1, 0].set_title("L₂ Error vs Exact Gaussian", fontweight='bold', pad=10)
+    axes[1, 0].set_xlabel("Numerical Method", labelpad=8)
+    axes[1, 0].set_ylabel("L₂ Error (log scale)", labelpad=8)
+    axes[1, 0].tick_params(axis="x", rotation=35)
 
     # Infinite well eigenstate verification
     xw, dxw = grid(-5.0, 5.0, n)
@@ -135,14 +154,14 @@ def experiment_analytic_vs_numerical(cfg: RunConfig) -> pd.DataFrame:
     _, psi_well_hist = solve("Crank-Nicolson", psi_well0, vw, xw, tw, dxw, dtw,
                              store_every=len(tw) - 1)
     psi_well_exact = psi_well0 * np.exp(-1j * e_well * tw_end)
-    axes[1, 0].plot(xw, np.abs(psi_well_exact) ** 2, "k--", lw=2.5,
+    axes[1, 1].plot(xw, np.abs(psi_well_exact) ** 2, "k--", lw=2.5,
                     label="Exact n=2", alpha=0.8)
-    axes[1, 0].plot(xw, np.abs(psi_well_hist[-1]) ** 2, lw=1.8,
+    axes[1, 1].plot(xw, np.abs(psi_well_hist[-1]) ** 2, lw=1.8,
                     label="Crank-Nicolson")
-    axes[1, 0].set_title("Infinite Well Eigenstate (n=2)", fontweight='bold', pad=10)
-    axes[1, 0].set_xlabel("Position x", labelpad=8)
-    axes[1, 0].set_ylabel("Probability Density |ψ|²", labelpad=8)
-    axes[1, 0].legend(fontsize=9, loc='upper right', framealpha=0.95)
+    axes[1, 1].set_title("Infinite Well Eigenstate (n=2)", fontweight='bold', pad=10)
+    axes[1, 1].set_xlabel("Position x", labelpad=8)
+    axes[1, 1].set_ylabel("|ψ|²", labelpad=8)
+    axes[1, 1].legend(fontsize=9, loc='upper right', framealpha=0.95)
 
     # Harmonic oscillator eigenstate verification
     xh, dxh = grid(-10.0, 10.0, n)
@@ -154,17 +173,17 @@ def experiment_analytic_vs_numerical(cfg: RunConfig) -> pd.DataFrame:
     _, psi_h_hist = solve("Crank-Nicolson", psi_h0, vh, xh, th, dxh, dth,
                           store_every=len(th) - 1)
     psi_h_exact = psi_h0 * np.exp(-1j * e_h * th_end)
-    axes[1, 1].plot(xh, np.abs(psi_h_exact) ** 2, "k--", lw=2.5,
+    axes[1, 2].plot(xh, np.abs(psi_h_exact) ** 2, "k--", lw=2.5,
                     label="Exact n=1", alpha=0.8)
-    axes[1, 1].plot(xh, np.abs(psi_h_hist[-1]) ** 2, lw=1.8,
+    axes[1, 2].plot(xh, np.abs(psi_h_hist[-1]) ** 2, lw=1.8,
                     label="Crank-Nicolson")
-    axes[1, 1].set_title("Harmonic Oscillator (n=1)", fontweight='bold', pad=10)
-    axes[1, 1].set_xlabel("Position x", labelpad=8)
-    axes[1, 1].set_ylabel("Probability Density |ψ|²", labelpad=8)
-    axes[1, 1].legend(fontsize=9, loc='upper right', framealpha=0.95)
+    axes[1, 2].set_title("Harmonic Oscillator (n=1)", fontweight='bold', pad=10)
+    axes[1, 2].set_xlabel("Position x", labelpad=8)
+    axes[1, 2].set_ylabel("|ψ|²", labelpad=8)
+    axes[1, 2].legend(fontsize=9, loc='upper right', framealpha=0.95)
 
-    fig.suptitle("Figure 1: Analytical vs Numerical Solutions",
-                 fontsize=16, fontweight='bold', y=1.02)
+    fig.suptitle("Figure 1: Numerical vs Analytical — |ψ|², Re[ψ], Im[ψ] (three lines)",
+                 fontsize=15, fontweight='bold', y=1.01)
     fig.savefig(os.path.join(cfg.outdir, "figure1_analytic_vs_numerical.png"),
                 dpi=cfg.dpi)
     plt.close(fig)
@@ -1137,3 +1156,345 @@ def save_wavepacket_animation_experiment(cfg: RunConfig) -> None:
     fig.savefig(os.path.join(cfg.outdir, "figure5_wavepacket_last_frame.png"),
                 dpi=cfg.dpi)
     plt.close(fig)
+
+
+# =============================================================================
+# RTD Double-Barrier Resonant Tunneling Experiment
+# =============================================================================
+
+
+def experiment_rtd_double_barrier(cfg: RunConfig) -> None:
+    """RTD double-barrier resonant tunneling simulation.
+
+    Simulates a Gaussian wave packet incident on a double-barrier
+    potential (resonant tunneling diode structure). Three energy cases
+    demonstrate off-resonance, near-resonance, and above-barrier transport.
+    """
+    print_section("RTD Double-Barrier Resonant Tunneling")
+    n = 1024 if not cfg.quick else 512
+    x, dx = grid(-60.0, 60.0, n)
+
+    # Double barrier: V0=1.0, barriers at [-3.0, -1.5] and [1.5, 3.0], well width=3.0
+    v0 = 1.0
+    a1, b1 = -3.0, -1.5
+    a2, b2 = 1.5, 3.0
+    v = potential_double_barrier(x, v0=v0, a1=a1, b1=b1, a2=a2, b2=b2)
+
+    sigma, x0 = 2.0, -25.0
+    dt = 0.01 if not cfg.quick else 0.02
+    t_end = 35.0 if not cfg.quick else 20.0
+    t = np.arange(0.0, t_end + 0.5 * dt, dt)
+
+    # Three energy cases for double barrier
+    # Well eigenstates approximately at k = n*pi/L (L = well width = 3.0)
+    # E_n = k_n^2/2, k_n ≈ n*pi/3 ≈ n*1.047
+    cases = [
+        ("E < V0 (off-resonance)",  np.sqrt(2.0 * 0.55 * v0)),   # E ≈ 0.55 V0
+        ("E ≈ V0 (near-resonance)", np.sqrt(2.0 * 1.00 * v0)),   # E ≈ V0
+        ("E > V0 (above-barrier)",  np.sqrt(2.0 * 1.80 * v0)),   # E ≈ 1.80 V0
+    ]
+
+    fig, axes = plt.subplots(2, 2, figsize=(16, 12), constrained_layout=True)
+    axes_flat = axes.flatten()
+
+    for ax, (label, k0) in zip(axes_flat[:3], cases):
+        psi0 = gaussian_wavepacket(x, x0, sigma, k0, dx)
+        energy = 0.5 * k0**2
+        _, hist = solve("Crank-Nicolson", psi0, v, x, t, dx, dt,
+                        store_every=len(t) - 1)
+        psi_final = hist[-1]
+
+        # Compute transmission/reflection
+        barrier_center = (a1 + b2) / 2  # ~ 0
+        tprob, rprob = transmission_reflection(psi_final, x, dx,
+                                                barrier_center=barrier_center)
+
+        ax.plot(x, np.abs(psi0)**2, color="gray", lw=1.2, label="Initial",
+                alpha=0.7, linestyle='--')
+        ax.plot(x, np.abs(psi_final)**2, lw=2.0, label="Final", color='#2E86AB')
+
+        # Shade the double barrier region
+        ax.fill_between(x, 0, v / max(v0, 1e-12) * 0.05, color="#C73E1D",
+                        alpha=0.3, label="Double Barrier")
+        ax.set_xlim(-35, 35)
+        ax.set_ylabel("Probability Density |ψ|²", labelpad=8)
+        ax.set_title(f"{label}: E={energy:.2f}, T={tprob:.3f}, R={rprob:.3f}",
+                     fontweight='bold', fontsize=11, pad=8)
+        ax.legend(fontsize=9, loc='upper right', framealpha=0.95)
+        ax.grid(True, alpha=0.3)
+
+    # Summary bar chart
+    ax_summary = axes_flat[-1]
+    results = []
+    for label, k0 in cases:
+        psi0 = gaussian_wavepacket(x, x0, sigma, k0, dx)
+        energy = 0.5 * k0**2
+        _, hist = solve("Crank-Nicolson", psi0, v, x, t, dx, dt,
+                        store_every=len(t) - 1)
+        psi_final = hist[-1]
+        barrier_center = (a1 + b2) / 2
+        tprob, rprob = transmission_reflection(psi_final, x, dx,
+                                                barrier_center=barrier_center)
+        results.append({"label": label, "T": tprob, "R": rprob, "E": energy})
+
+    labels = [r["label"].split("(")[0].strip() for r in results]
+    T_vals = [r["T"] for r in results]
+    R_vals = [r["R"] for r in results]
+    x_pos = np.arange(len(labels))
+    width = 0.35
+    ax_summary.bar(x_pos - width/2, T_vals, width, label='Transmission',
+                   color='#2E86AB', edgecolor='white')
+    ax_summary.bar(x_pos + width/2, R_vals, width, label='Reflection',
+                   color='#A23B72', edgecolor='white')
+    ax_summary.set_xticks(x_pos)
+    ax_summary.set_xticklabels(labels, fontsize=9)
+    ax_summary.set_ylabel("Probability", labelpad=8)
+    ax_summary.set_title("RTD Transmission vs Reflection",
+                         fontweight='bold', fontsize=12, pad=10)
+    ax_summary.legend(fontsize=9)
+    ax_summary.set_ylim(0, 1.1)
+    ax_summary.grid(True, alpha=0.3, axis='y')
+
+    fig.suptitle("RTD Double-Barrier Resonant Tunneling (Crank-Nicolson)",
+                 fontsize=15, fontweight='bold', y=0.98)
+    fig.savefig(os.path.join(cfg.outdir, "figure_rtd_double_barrier.png"),
+                dpi=cfg.dpi)
+    plt.close(fig)
+
+    print("\nRTD Double-Barrier Results:")
+    for r in results:
+        print(f"  {r['label']}: E={r['E']:.3f}, T={r['T']:.4f}, R={r['R']:.4f}, "
+              f"T+R={r['T']+r['R']:.4f}")
+
+
+# =============================================================================
+# All-Methods Comprehensive Comparison
+# =============================================================================
+
+
+def experiment_all_methods_comparison(cfg: RunConfig) -> None:
+    """Comprehensive comparison of all numerical methods for TDSE.
+
+    Compares FTCS, Backward Euler, Crank-Nicolson, RK4, Split-Step FFT,
+    and PINN (if available) on the free Gaussian benchmark. Generates
+    a multi-panel figure showing L2 error, mass error, and runtime.
+
+    Methods are color-coded by source: course methods (green/blue tones)
+    vs extension methods (orange/red tones).
+    """
+    print_section("All-Methods Comprehensive Comparison")
+
+    # Try to import PINN results
+    pinn_available = False
+    pinn_l2 = None
+    pinn_runtime = None
+    pinn_mass_err = None
+    try:
+        import torch
+        from ex_pinn import PINNSolver
+        pinn_available = True
+    except ImportError:
+        print("  PINN not available (PyTorch missing), skipping PINN comparison")
+
+    n = 256 if not cfg.quick else 192
+    x, dx = grid(-15.0, 15.0, n)
+    t_end = 1.5
+    dt = 0.002
+    t = np.arange(0.0, t_end + 0.5 * dt, dt)
+    x0, sigma, k0 = -4.0, 0.8, 3.0
+
+    psi0 = gaussian_wavepacket(x, x0, sigma, k0, dx)
+    v = potential_free(x)
+    psi_exact = exact_free_gaussian(x, t_end, x0, sigma, k0, dx)
+
+    methods = ["FTCS", "Backward-Euler", "Crank-Nicolson", "RK4", "Split-Step-FFT"]
+    # Source classification
+    source = {
+        "FTCS": "Course (Ch.4)",
+        "Backward-Euler": "Course (Ch.4)",
+        "Crank-Nicolson": "Course (Ch.4)",
+        "RK4": "Extension",
+        "Split-Step-FFT": "Extension",
+        "PINN": "Extension (Appendix)",
+    }
+    course_colors = ['#2E86AB', '#1B998B', '#6B4C9A']       # blue-green-purple
+    ext_colors = ['#F18F01', '#C73E1D', '#A23B72']          # warm colors
+
+    results = {}
+    for method in tqdm(methods, desc="numerical methods"):
+        start = time.perf_counter()
+        _, hist = solve(method, psi0, v, x, t, dx, dt, store_every=len(t) - 1)
+        runtime = time.perf_counter() - start
+        psi_num = hist[-1]
+        l1, l2, linf = l1_l2_linf_error(psi_num, psi_exact, dx)
+        mass = probability_mass(psi_num, dx)
+        results[method] = {
+            "psi": psi_num, "runtime": runtime,
+            "L1": l1, "L2": l2, "Linf": linf,
+            "mass": mass, "mass_err": abs(mass - 1.0),
+            "source": source[method],
+        }
+
+    # PINN (quick mode: fewer epochs)
+    if pinn_available:
+        print("  Training PINN (quick, 500 epochs)...")
+        try:
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            pinn = PINNSolver(hidden_layers=6, neurons=128,
+                              learning_rate=1e-3, device=device)
+            x_pde = np.random.uniform(x[0], x[-1], 3000)
+            t_pde = np.random.uniform(0.0, t_end, 3000)
+            pinn.train(x_domain=x_pde, t_domain=t_pde, x_ic=x, psi0=psi0,
+                       V_func=None, epochs=500, batch_size=1024,
+                       lambda_pde=1.0, lambda_ic=10.0, lambda_bc=5.0,
+                       verbose=False)
+            psi_pinn = pinn.predict(x, t_end)
+            l1, l2, linf = l1_l2_linf_error(psi_pinn, psi_exact, dx)
+            mass = probability_mass(psi_pinn, dx)
+            results["PINN"] = {
+                "psi": psi_pinn, "runtime": pinn.train_time,
+                "L1": l1, "L2": l2, "Linf": linf,
+                "mass": mass, "mass_err": abs(mass - 1.0),
+                "source": source["PINN"],
+            }
+            pinn_l2, pinn_runtime, pinn_mass_err = l2, pinn.train_time, abs(mass - 1.0)
+            print(f"    PINN L2={l2:.4e}, mass_err={abs(mass-1.0):.4e}, "
+                  f"runtime={pinn.train_time:.1f}s")
+        except Exception as e:
+            print(f"    PINN training failed: {e}")
+
+    # ---- Plotting ----
+    all_methods = list(results.keys())
+    n_methods = len(all_methods)
+
+    fig, axes = plt.subplots(2, 3, figsize=(22, 12), constrained_layout=True)
+
+    # Colors based on source
+    bar_colors = []
+    for m in all_methods:
+        if source[m].startswith("Course"):
+            bar_colors.append(course_colors[len(bar_colors) % len(course_colors)])
+        else:
+            bar_colors.append(ext_colors[len([c for c in bar_colors
+                                              if c in ext_colors]) % len(ext_colors)])
+
+    # 1. Wave function comparison
+    ax = axes[0, 0]
+    ax.plot(x, np.abs(psi_exact)**2, "k--", lw=3.0, label="Exact", alpha=0.9)
+    for method in all_methods:
+        alpha_val = 1.0 if source[method].startswith("Course") else 0.7
+        ls = '-' if source[method].startswith("Course") else '--'
+        ax.plot(x, np.abs(results[method]["psi"])**2, lw=1.8, label=method,
+                alpha=alpha_val, linestyle=ls)
+    ax.set_xlabel("Position x", labelpad=8)
+    ax.set_ylabel("|ψ|²", labelpad=8)
+    ax.set_title("Probability Density", fontweight='bold', pad=10)
+    ax.legend(fontsize=7, loc='upper left', framealpha=0.95, ncol=2)
+    ax.set_xlim(-8, 5)
+    ax.grid(True, alpha=0.3)
+
+    # 2. L2 Error (bar chart, log scale)
+    ax = axes[0, 1]
+    l2_vals = [results[m]["L2"] for m in all_methods]
+    bars = ax.bar(all_methods, l2_vals, color=bar_colors, alpha=0.85,
+                  edgecolor='white', linewidth=0.5)
+    ax.set_yscale("log")
+    ax.set_title("L₂ Error (log scale)", fontweight='bold', pad=10)
+    ax.set_ylabel("L₂ Error", labelpad=8)
+    ax.tick_params(axis="x", rotation=35, labelsize=9)
+    for bar, val in zip(bars, l2_vals):
+        ax.text(bar.get_x() + bar.get_width()/2, val * 1.8, f"{val:.1e}",
+                ha='center', va='bottom', fontsize=7, rotation=45)
+    ax.grid(True, alpha=0.3, axis='y')
+
+    # 3. Mass Error (bar chart, log scale)
+    ax = axes[0, 2]
+    mass_vals = [results[m]["mass_err"] for m in all_methods]
+    mass_vals_clipped = [max(v, 1e-16) for v in mass_vals]
+    bars = ax.bar(all_methods, mass_vals_clipped, color=bar_colors, alpha=0.85,
+                  edgecolor='white', linewidth=0.5)
+    ax.set_yscale("log")
+    ax.set_title("Mass Error |M(t)-M(0)|", fontweight='bold', pad=10)
+    ax.set_ylabel("Mass Error", labelpad=8)
+    ax.tick_params(axis="x", rotation=35, labelsize=9)
+    for bar, val in zip(bars, mass_vals_clipped):
+        ax.text(bar.get_x() + bar.get_width()/2, val * 1.8, f"{val:.1e}",
+                ha='center', va='bottom', fontsize=7, rotation=45)
+    ax.grid(True, alpha=0.3, axis='y')
+
+    # 4. Runtime comparison
+    ax = axes[1, 0]
+    runtimes = [results[m]["runtime"] for m in all_methods]
+    bars = ax.bar(all_methods, runtimes, color=bar_colors, alpha=0.85,
+                  edgecolor='white', linewidth=0.5)
+    ax.set_title("Runtime Comparison", fontweight='bold', pad=10)
+    ax.set_ylabel("Runtime (seconds)", labelpad=8)
+    ax.tick_params(axis="x", rotation=35, labelsize=9)
+    for bar, val in zip(bars, runtimes):
+        lbl = f"{val*1000:.0f}ms" if val < 1 else f"{val:.1f}s"
+        ax.text(bar.get_x() + bar.get_width()/2, val * 1.05, lbl,
+                ha='center', va='bottom', fontsize=7, rotation=45)
+    ax.grid(True, alpha=0.3, axis='y')
+
+    # 5. Efficiency (L2 Error / Runtime, lower is better)
+    ax = axes[1, 1]
+    efficiencies = [results[m]["L2"] / max(results[m]["runtime"], 1e-10)
+                    for m in all_methods]
+    bars = ax.bar(all_methods, efficiencies, color=bar_colors, alpha=0.85,
+                  edgecolor='white', linewidth=0.5)
+    ax.set_yscale("log")
+    ax.set_title("Efficiency (L₂ Error / Time)", fontweight='bold', pad=10)
+    ax.set_ylabel("Error / Runtime", labelpad=8)
+    ax.tick_params(axis="x", rotation=35, labelsize=9)
+    for bar, val in zip(bars, efficiencies):
+        ax.text(bar.get_x() + bar.get_width()/2, val * 1.8, f"{val:.1e}",
+                ha='center', va='bottom', fontsize=7, rotation=45)
+    ax.grid(True, alpha=0.3, axis='y')
+
+    # 6. Legend / Summary table
+    ax = axes[1, 2]
+    ax.axis("off")
+    summary_lines = ["Method Source Legend:", ""]
+    summary_lines.append("■ Course Methods (Ch.4):")
+    summary_lines.append("  FTCS, Backward Euler, Crank-Nicolson")
+    summary_lines.append("")
+    summary_lines.append("■ Extensions:")
+    summary_lines.append("  RK4, SSFM, PINN (Appendix)")
+    summary_lines.append("")
+    summary_lines.append("Key Findings:")
+    # Find best non-PINN method
+    best = min([(m, results[m]["L2"]) for m in all_methods
+                if m != "PINN" and m != "FTCS"],
+               key=lambda x: x[1])
+    summary_lines.append(f"• Best accuracy: {best[0]}")
+    cn = results.get("Crank-Nicolson", {})
+    ssf = results.get("Split-Step-FFT", {})
+    if cn and ssf:
+        summary_lines.append(
+            f"• CN mass err: {cn.get('mass_err', 0):.1e}")
+        summary_lines.append(
+            f"• SSF mass err: {ssf.get('mass_err', 0):.1e}")
+    if pinn_l2 is not None:
+        summary_lines.append(f"• PINN L2: {pinn_l2:.2e} "
+                             f"(vs SSF: {ssf.get('L2', 0):.1e})")
+    summary_text = "\n".join(summary_lines)
+    ax.text(0.05, 0.95, summary_text, transform=ax.transAxes,
+            fontsize=9, verticalalignment='top', fontfamily='monospace',
+            bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
+
+    fig.suptitle("Figure: All-Methods Comprehensive Comparison (TDSE)",
+                 fontsize=15, fontweight='bold', y=1.01)
+    fig.savefig(os.path.join(cfg.outdir, "figure_all_methods_comparison.png"),
+                dpi=cfg.dpi, bbox_inches='tight')
+    plt.close(fig)
+
+    # Print summary table
+    print(f"\n{'='*80}")
+    print(f"{'Method':<20s} {'Source':<20s} {'L2 Error':<12s} "
+          f"{'Mass Err':<12s} {'Runtime':<12s}")
+    print(f"{'-'*80}")
+    for m in all_methods:
+        r = results[m]
+        print(f"{m:<20s} {r['source']:<20s} {r['L2']:<12.4e} "
+              f"{r['mass_err']:<12.4e} {r['runtime']:<10.4f}s")
+    print(f"{'='*80}")

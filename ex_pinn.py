@@ -564,6 +564,10 @@ def experiment_pinn_free_gaussian(
 
     fig1.suptitle("PINN vs Numerical Methods: Wave Function", fontsize=14, fontweight='bold', y=1.02)
     fig1.savefig(os.path.join(outdir, "figure1_wave_function.png"), dpi=cfg.dpi, bbox_inches='tight')
+    try:
+        fig1.savefig(os.path.join(outdir, "figure1_wave_function.pdf"), dpi=cfg.dpi, format='pdf', bbox_inches='tight')
+    except Exception:
+        pass
     plt.close(fig1)
 
     # Figure 2: Error Analysis (L2, Mass, Absolute Error, Efficiency)
@@ -623,6 +627,10 @@ def experiment_pinn_free_gaussian(
 
     fig2.suptitle("PINN vs Numerical Methods: Error Analysis", fontsize=14, fontweight='bold', y=1.02)
     fig2.savefig(os.path.join(outdir, "figure2_errors.png"), dpi=cfg.dpi, bbox_inches='tight')
+    try:
+        fig2.savefig(os.path.join(outdir, "figure2_errors.pdf"), dpi=cfg.dpi, format='pdf', bbox_inches='tight')
+    except Exception:
+        pass
     plt.close(fig2)
 
     # Figure 3: Runtime Comparison
@@ -642,6 +650,10 @@ def experiment_pinn_free_gaussian(
                 ha='center', va='bottom', fontsize=9, rotation=45)
     ax3.grid(True, alpha=0.3, axis='y')
     fig3.savefig(os.path.join(outdir, "figure3_runtime.png"), dpi=cfg.dpi, bbox_inches='tight')
+    try:
+        fig3.savefig(os.path.join(outdir, "figure3_runtime.pdf"), dpi=cfg.dpi, format='pdf', bbox_inches='tight')
+    except Exception:
+        pass
     plt.close(fig3)
 
     # Figure 4: Training Loss History
@@ -672,6 +684,10 @@ def experiment_pinn_free_gaussian(
 
     fig4.suptitle("PINN Training Progress", fontsize=14, fontweight='bold', y=1.02)
     fig4.savefig(os.path.join(outdir, "figure4_training_loss.png"), dpi=cfg.dpi, bbox_inches='tight')
+    try:
+        fig4.savefig(os.path.join(outdir, "figure4_training_loss.pdf"), dpi=cfg.dpi, format='pdf', bbox_inches='tight')
+    except Exception:
+        pass
     plt.close(fig4)
 
     # Figure 5: Phase Portraits
@@ -709,6 +725,10 @@ def experiment_pinn_free_gaussian(
 
     fig5.suptitle("Phase Portraits: PINN vs Numerical Methods", fontsize=14, fontweight='bold', y=1.02)
     fig5.savefig(os.path.join(outdir, "figure5_phase_portraits.png"), dpi=cfg.dpi, bbox_inches='tight')
+    try:
+        fig5.savefig(os.path.join(outdir, "figure5_phase_portraits.pdf"), dpi=cfg.dpi, format='pdf', bbox_inches='tight')
+    except Exception:
+        pass
     plt.close(fig5)
 
     # ---- 5. Print summary ----

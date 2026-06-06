@@ -57,6 +57,8 @@ from tdse.experiments import (
     experiment_runtime_comparison,
     experiment_2d_convergence,
     experiment_2d_error_heatmap,
+    experiment_rtd_double_barrier,
+    experiment_all_methods_comparison,
     save_wavepacket_animation_experiment,
 )
 
@@ -123,6 +125,8 @@ def main() -> None:
         experiment_runtime_comparison(cfg)
         experiment_2d_convergence(cfg)
         experiment_2d_error_heatmap(cfg)
+        # Comprehensive all-methods comparison (incl. PINN if available)
+        experiment_all_methods_comparison(cfg)
 
     elif args.run_1d:
         # 1D-only experiments
@@ -134,6 +138,7 @@ def main() -> None:
         if cfg.save_gif:
             save_wavepacket_animation_experiment(cfg)
         experiment_tunneling(cfg)
+        experiment_rtd_double_barrier(cfg)
 
     elif args.run_2d:
         # 2D-only experiments
@@ -155,6 +160,9 @@ def main() -> None:
 
         experiment_tunneling(cfg)
 
+        # RTD double-barrier resonant tunneling
+        experiment_rtd_double_barrier(cfg)
+
         # 2D experiments
         experiment_2d_free_propagation(cfg)
         experiment_2d_circular_obstacle_with_animation(cfg)
@@ -167,6 +175,8 @@ def main() -> None:
         experiment_runtime_comparison(cfg)
         experiment_2d_convergence(cfg)
         experiment_2d_error_heatmap(cfg)
+        # Comprehensive all-methods comparison (incl. PINN if available)
+        experiment_all_methods_comparison(cfg)
 
     # ---- Execution summary ----
     total_runtime = time.perf_counter() - total_start

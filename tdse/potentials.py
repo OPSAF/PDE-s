@@ -243,6 +243,36 @@ class RectangularBarrier(Potential1D):
         return potential_rect_barrier(x, self.v0, self.a, self.b)
 
 
+class DoubleBarrier1D(Potential1D):
+    """Resonant tunneling double-barrier potential (RTD structure).
+
+    V(x) = V0 for x in [a1, b1] ∪ [a2, b2], 0 otherwise.
+    Two identical barriers with a quantum well between them,
+    forming a resonant tunneling diode (RTD) structure.
+    """
+
+    def __init__(self, v0: float = 1.0,
+                 a1: float = -3.0, b1: float = -1.5,
+                 a2: float = 1.5, b2: float = 3.0):
+        self.v0 = v0
+        self.a1 = a1
+        self.b1 = b1
+        self.a2 = a2
+        self.b2 = b2
+
+    @property
+    def name(self) -> str:
+        return f"Double Barrier (V0={self.v0})"
+
+    @property
+    def vmax(self) -> float:
+        return self.v0
+
+    def __call__(self, x: Array) -> Array:
+        return potential_double_barrier(x, self.v0,
+                                        self.a1, self.b1, self.a2, self.b2)
+
+
 # =============================================================================
 # 2D Potential Classes
 # =============================================================================
@@ -307,6 +337,7 @@ class TDSEPotentialFactory:
         "free": FreePotential,
         "harmonic": HarmonicPotential,
         "barrier": RectangularBarrier,
+        "double_barrier": DoubleBarrier1D,
     }
 
     _2d_potentials = {
@@ -371,6 +402,15 @@ def potential_harmonic(x: Array, omega: float = 1.0) -> Array:
 def potential_rect_barrier(x: Array, v0: float = 1.0, a: float = -0.5, b: float = 0.5) -> Array:
     """Rectangular potential barrier."""
     return np.where((x > a) & (x < b), v0, 0.0).astype(float)
+
+
+def potential_double_barrier(x: Array, v0: float = 1.0,
+                             a1: float = -3.0, b1: float = -1.5,
+                             a2: float = 1.5, b2: float = 3.0) -> Array:
+    """RTD double-barrier potential: two identical barriers with a well between."""
+    barrier1 = np.where((x > a1) & (x < b1), v0, 0.0)
+    barrier2 = np.where((x > a2) & (x < b2), v0, 0.0)
+    return (barrier1 + barrier2).astype(float)
 
 
 def potential_infinite_well_mask(x: Array, a: float = -5.0, b: float = 5.0) -> Array:

@@ -36,7 +36,7 @@ class TDSEConfig:
     outdir: str = "tdse_outputs"
     quick: bool = False
     save_gif: bool = True
-    dpi: int = 300
+    dpi: int = 600
     dim: int = 1
     grid_size: int = 384
     xmin: float = -30.0
@@ -70,7 +70,7 @@ class RunConfig:
     outdir: str = "tdse_outputs"
     quick: bool = False
     save_gif: bool = True
-    dpi: int = 300
+    dpi: int = 600
 
 
 def ensure_outdir(outdir: str) -> None:
@@ -78,7 +78,7 @@ def ensure_outdir(outdir: str) -> None:
     os.makedirs(outdir, exist_ok=True)
 
 
-def setup_plot_style(dpi: int = 300) -> None:
+def setup_plot_style(dpi: int = 600) -> None:
     """
     Configure global matplotlib style for high-quality publication-ready output.
 
@@ -112,7 +112,11 @@ def setup_plot_style(dpi: int = 300) -> None:
     plt.rcParams['savefig.dpi'] = dpi
     plt.rcParams['savefig.bbox'] = 'tight'
     plt.rcParams['savefig.pad_inches'] = 0.2  # Increased padding to prevent cutoff
+    # Prefer vector-friendly output for publication; PNG still supported
     plt.rcParams['savefig.format'] = 'png'
+    # Ensure PDF/PS output embeds fonts as Type42 (good for publishers)
+    plt.rcParams['pdf.fonttype'] = 42
+    plt.rcParams['ps.fonttype'] = 42
 
     # Image display settings
     plt.rcParams['image.cmap'] = 'inferno'
