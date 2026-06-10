@@ -36,9 +36,9 @@ class TDSEConfig:
     outdir: str = "tdse_outputs"
     quick: bool = False
     save_gif: bool = True
-    dpi: int = 600
+    dpi: int = 1200
     dim: int = 1
-    grid_size: int = 384
+    grid_size: int = 2048
     xmin: float = -30.0
     xmax: float = 30.0
     ymin: float = -10.0
@@ -60,7 +60,8 @@ class TDSEConfig:
             outdir=self.outdir,
             quick=self.quick,
             save_gif=self.save_gif,
-            dpi=self.dpi
+            dpi=self.dpi,
+            grid_size=self.grid_size,
         )
 
 
@@ -71,6 +72,7 @@ class RunConfig:
     quick: bool = False
     save_gif: bool = True
     dpi: int = 600
+    grid_size: int = 1024
 
 
 def ensure_outdir(outdir: str) -> None:

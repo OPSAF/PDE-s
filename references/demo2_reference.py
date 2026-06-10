@@ -91,9 +91,9 @@ class TDSEConfig:
     outdir: str = "tdse_outputs2"
     quick: bool = False
     save_gif: bool = True
-    dpi: int = 300
+    dpi: int = 600
     dim: int = 1
-    grid_size: int = 384
+    grid_size: int = 1024
     xmin: float = -30.0
     xmax: float = 30.0
     ymin: float = -10.0

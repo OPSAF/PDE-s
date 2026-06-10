@@ -223,6 +223,149 @@ class TDSEVisualizer:
         plt.close(fig)
 
 
+    def plot_wavefunction_real_imag(
+        self,
+        x: Array,
+        psi: Array,
+        title: str = "Wavefunction — Real and Imaginary Parts",
+        filename: Optional[str] = None,
+        show_exact: Optional[Array] = None,
+    ) -> None:
+        """
+        Plot Re[psi] and Im[psi] vs x on a single axis.
+
+        Args:
+            x: Spatial grid
+            psi: Complex wave function array
+            title: Plot title
+            filename: If provided, save to file
+            show_exact: Exact solution for comparison
+        """
+        fig, ax = plt.subplots(figsize=(12, 6), constrained_layout=True)
+
+        ax.plot(x, np.real(psi), lw=2.5, label=r"$\mathrm{Re}[\psi]$",
+                color='#2E86AB')
+        ax.plot(x, np.imag(psi), lw=2.5, label=r"$\mathrm{Im}[\psi]$",
+                color='#C73E1D')
+
+        if show_exact is not None:
+            ax.plot(x, np.real(show_exact), "k--", lw=1.5,
+                    label="Exact Re", alpha=0.7)
+            ax.plot(x, np.imag(show_exact), "k:", lw=1.5,
+                    label="Exact Im", alpha=0.7)
+
+        ax.set_xlabel(r"Position $x$", labelpad=12, fontsize=12)
+        ax.set_ylabel(r"Wavefunction", labelpad=12, fontsize=12)
+        ax.set_title(title, fontweight='bold', pad=20, fontsize=14)
+        ax.legend(fontsize=10, loc='upper right', framealpha=0.95,
+                 bbox_to_anchor=(1.02, 1))
+        ax.grid(True, alpha=0.3)
+        ax.tick_params(axis='both', labelsize=10, pad=8)
+
+        if filename:
+            plt.savefig(os.path.join(self.config.outdir, filename),
+                       dpi=self.config.dpi, bbox_inches='tight')
+
+        plt.close(fig)
+
+    def plot_complex_comparison(
+        self,
+        data: Dict[str, Array],
+        x: Array,
+        title: str = "Complex Wavefunction Comparison",
+        filename: Optional[str] = None,
+    ) -> None:
+        """
+        Three-panel figure: |psi|^2 (left), Re[psi] (center), Im[psi] (right).
+
+        Args:
+            data: Dictionary mapping method names to complex psi arrays
+            x: Spatial grid
+            title: Overall figure title
+            filename: If provided, save to file
+        """
+        fig, axes = plt.subplots(1, 3, figsize=(22, 6),
+                                 constrained_layout=True)
+
+        colors = ['#2E86AB', '#A23B72', '#F18F01', '#C73E1D',
+                 '#95C623', '#6B4C9A', '#1B998B']
+
+        for idx, (name, psi) in enumerate(data.items()):
+            color = colors[idx % len(colors)]
+            axes[0].plot(x, np.abs(psi) ** 2, lw=1.8, label=name, color=color)
+            axes[1].plot(x, np.real(psi), lw=1.8, label=name, color=color)
+            axes[2].plot(x, np.imag(psi), lw=1.8, label=name, color=color)
+
+        axes[0].set_title(r"Probability Density $|\psi|^2$",
+                          fontweight='bold', fontsize=13, pad=10)
+        axes[0].set_xlabel(r"Position $x$", labelpad=8)
+        axes[0].set_ylabel(r"$|\psi|^2$", labelpad=8)
+
+        axes[1].set_title(r"Real Part $\mathrm{Re}[\psi]$",
+                          fontweight='bold', fontsize=13, pad=10)
+        axes[1].set_xlabel(r"Position $x$", labelpad=8)
+        axes[1].set_ylabel(r"$\mathrm{Re}[\psi]$", labelpad=8)
+
+        axes[2].set_title(r"Imaginary Part $\mathrm{Im}[\psi]$",
+                          fontweight='bold', fontsize=13, pad=10)
+        axes[2].set_xlabel(r"Position $x$", labelpad=8)
+        axes[2].set_ylabel(r"$\mathrm{Im}[\psi]$", labelpad=8)
+        axes[2].legend(fontsize=8, loc='upper right', framealpha=0.95, ncol=1)
+
+        for ax in axes:
+            ax.grid(True, alpha=0.3)
+            ax.tick_params(labelsize=10)
+
+        fig.suptitle(title, fontsize=15, fontweight='bold', y=1.01)
+
+        if filename:
+            plt.savefig(os.path.join(self.config.outdir, filename),
+                       dpi=self.config.dpi, bbox_inches='tight')
+
+        plt.close(fig)
+
+    def plot_phase_portrait(
+        self,
+        x: Array,
+        psi: Array,
+        title: str = "Phase Portrait",
+        filename: Optional[str] = None,
+    ) -> None:
+        """
+        Parametric Re[psi] vs Im[psi] scatter plot colored by spatial position.
+
+        The phase portrait (complex-plane trajectory) reveals the wavefunction's
+        phase structure: how the complex value winds through the plane as x varies.
+
+        Args:
+            x: Spatial grid (used to color the scatter points)
+            psi: Complex wave function array
+            title: Plot title
+            filename: If provided, save to file
+        """
+        fig, ax = plt.subplots(figsize=(8, 8), constrained_layout=True)
+
+        points = ax.scatter(np.real(psi), np.imag(psi), c=x, cmap='inferno',
+                           s=2, alpha=0.7, edgecolors='none')
+        cbar = plt.colorbar(points, ax=ax, label="Position x", shrink=0.85)
+        cbar.ax.tick_params(labelsize=9)
+
+        ax.set_xlabel(r"$\mathrm{Re}[\psi]$", labelpad=10, fontsize=12)
+        ax.set_ylabel(r"$\mathrm{Im}[\psi]$", labelpad=10, fontsize=12)
+        ax.set_title(title, fontweight='bold', pad=15, fontsize=14)
+        ax.axhline(0, color='gray', lw=0.5, alpha=0.5)
+        ax.axvline(0, color='gray', lw=0.5, alpha=0.5)
+        ax.set_aspect('equal')
+        ax.grid(True, alpha=0.3)
+        ax.tick_params(labelsize=10)
+
+        if filename:
+            plt.savefig(os.path.join(self.config.outdir, filename),
+                       dpi=self.config.dpi, bbox_inches='tight')
+
+        plt.close(fig)
+
+
 # =============================================================================
 # Animation Functions
 # =============================================================================

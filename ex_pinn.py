@@ -265,7 +265,7 @@ class PINNSolver:
         x_ic: np.ndarray,
         psi0: np.ndarray,
         V_func: Optional[callable] = None,
-        epochs: int = 2000,
+        epochs: int = 5000,
         batch_size: int = 2048,
         lambda_pde: float = 1.0,
         lambda_ic: float = 10.0,
@@ -411,8 +411,8 @@ def make_potential_func(x_array: np.ndarray, V_array: np.ndarray):
 
 def experiment_pinn_free_gaussian(
     cfg: RunConfig,
-    hidden_layers: int = 6,
-    neurons: int = 128,
+    hidden_layers: int = 4,
+    neurons: int = 256,
     epochs: int = 2000,
 ) -> None:
     """
@@ -432,12 +432,12 @@ def experiment_pinn_free_gaussian(
     setup_plot_style(cfg.dpi)
 
     # Setup problem
-    n = 256
-    x, dx = grid(-15.0, 15.0, n)
-    t_end = 1.5
-    dt = 0.002
+    n = getattr(cfg, 'grid_size', 128)
+    x, dx = grid(-10.0, 10.0, n)
+    t_end = 0.5
+    dt = 0.0002
     t = np.arange(0.0, t_end + 0.5 * dt, dt)
-    x0, sigma, k0 = -4.0, 0.8, 3.0
+    x0, sigma, k0 = -3.0, 1.0, 2.0
 
     psi0 = gaussian_wavepacket(x, x0, sigma, k0, dx)
     v = potential_free(x)
@@ -455,6 +455,10 @@ def experiment_pinn_free_gaussian(
         _, psi_hist = solve(method, psi0, v, x, t, dx, dt, store_every=len(t) - 1)
         runtime = time.perf_counter() - start
         psi_num = psi_hist[-1]
+        # Check for overflow/instability
+        if not np.all(np.isfinite(psi_num)):
+            print(f"    {method:<18s}  UNSTABLE (overflow)  time={runtime:.4f}s")
+            continue
         l1, l2, linf = l1_l2_linf_error(psi_num, psi_exact, dx)
         mass = probability_mass(psi_num, dx)
         num_results[method] = {
@@ -464,13 +468,16 @@ def experiment_pinn_free_gaussian(
         print(f"    {method:<18s}  L2={l2:.4e}  mass_err={abs(mass-1.0):.2e}  "
               f"time={runtime:.4f}s")
 
+    # Only use stable methods for comparison
+    stable_methods = [m for m in methods if m in num_results]
+
     # ---- 2. PINN ----
     print("\n  Training PINN...")
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     # Sample interior points for PDE loss
-    n_pde = 5000
+    n_pde = 2000
     x_pde_samples = np.random.uniform(x[0], x[-1], n_pde)
     t_pde_samples = np.random.uniform(0.0, t_end, n_pde)
 
@@ -493,7 +500,7 @@ def experiment_pinn_free_gaussian(
         psi0=psi0,
         V_func=None,  # Free particle
         epochs=epochs,
-        batch_size=2048,
+        batch_size=1024,
         lambda_pde=1.0,
         lambda_ic=10.0,
         lambda_bc=5.0,
@@ -526,33 +533,33 @@ def experiment_pinn_free_gaussian(
     ax = axes1[0]
     ax.plot(x, np.abs(psi_exact) ** 2, "k--", lw=3.0, label="Exact", alpha=0.9)
     ax.plot(x, np.abs(psi_pinn) ** 2, lw=2.5, label=f"PINN", color=method_colors["PINN"])
-    for method in methods:
+    for method in stable_methods:
         ax.plot(x, np.abs(num_results[method]["psi"]) ** 2, lw=1.8,
                label=method, color=method_colors[method], alpha=0.75)
     ax.set_xlabel("Position x", labelpad=8)
     ax.set_ylabel("|psi|^2", labelpad=8)
     ax.set_title("Probability Density Comparison", fontweight='bold', pad=10)
     ax.legend(fontsize=8, loc='upper left', framealpha=0.95, ncol=2)
-    ax.set_xlim(-10, 5)
+    ax.set_xlim(-8, 5)
     ax.grid(True, alpha=0.3)
 
     ax = axes1[1]
     ax.plot(x, np.real(psi_exact), "k--", lw=3.0, label="Exact", alpha=0.9)
     ax.plot(x, np.real(psi_pinn), lw=2.5, label="PINN", color=method_colors["PINN"])
-    for method in methods:
+    for method in stable_methods:
         ax.plot(x, np.real(num_results[method]["psi"]), lw=1.8,
                label=method, color=method_colors[method], alpha=0.7)
     ax.set_xlabel("Position x", labelpad=8)
     ax.set_ylabel("Re[psi]", labelpad=8)
     ax.set_title("Real Part Comparison", fontweight='bold', pad=10)
     ax.legend(fontsize=7, framealpha=0.95)
-    ax.set_xlim(-10, 5)
+    ax.set_xlim(-8, 5)
     ax.grid(True, alpha=0.3)
 
     ax = axes1[2]
     ax.plot(x, np.imag(psi_exact), "k--", lw=3.0, label="Exact", alpha=0.9)
     ax.plot(x, np.imag(psi_pinn), lw=2.5, label="PINN", color=method_colors["PINN"])
-    for method in methods:
+    for method in stable_methods:
         ax.plot(x, np.imag(num_results[method]["psi"]), lw=1.8,
                label=method, color=method_colors[method], alpha=0.7)
     ax.set_xlabel("Position x", labelpad=8)
@@ -573,9 +580,9 @@ def experiment_pinn_free_gaussian(
     # Figure 2: Error Analysis (L2, Mass, Absolute Error, Efficiency)
     fig2, axes2 = plt.subplots(2, 2, figsize=(16, 10), constrained_layout=True)
     ax = axes2[0, 0]
-    methods_all = ["PINN"] + methods
-    l2_errors = [l2] + [num_results[m]["L2"] for m in methods]
-    colors = [method_colors["PINN"]] + [method_colors[m] for m in methods]
+    methods_all = ["PINN"] + stable_methods
+    l2_errors = [l2] + [num_results[m]["L2"] for m in stable_methods]
+    colors = [method_colors["PINN"]] + [method_colors[m] for m in stable_methods]
     bars = ax.bar(methods_all, l2_errors, color=colors, alpha=0.85, edgecolor='white', linewidth=0.5)
     ax.set_yscale("log")
     ax.set_title("L2 Error (log scale)", fontweight='bold', pad=10)
@@ -587,7 +594,7 @@ def experiment_pinn_free_gaussian(
                ha='center', va='bottom', fontsize=8, rotation=45)
 
     ax = axes2[0, 1]
-    mass_errors = [abs(mass - 1.0)] + [num_results[m]["mass_err"] for m in methods]
+    mass_errors = [abs(mass - 1.0)] + [num_results[m]["mass_err"] for m in stable_methods]
     bars = ax.bar(methods_all, mass_errors, color=colors, alpha=0.85, edgecolor='white', linewidth=0.5)
     ax.set_yscale("log")
     ax.set_title("Mass Error (log scale)", fontweight='bold', pad=10)
@@ -600,19 +607,19 @@ def experiment_pinn_free_gaussian(
 
     ax = axes2[1, 0]
     ax.plot(x, np.abs(psi_pinn - psi_exact), lw=2.0, label="PINN", color=method_colors["PINN"])
-    for method in methods:
+    for method in stable_methods:
         ax.plot(x, np.abs(num_results[method]["psi"] - psi_exact), lw=1.5,
                label=method, color=method_colors[method], alpha=0.7)
     ax.set_xlabel("Position x", labelpad=8)
     ax.set_ylabel("|psi - psi_exact|", labelpad=8)
     ax.set_title("Absolute Error vs Exact", fontweight='bold', pad=10)
-    ax.set_xlim(-10, 5)
-    ax.legend(fontsize=8, framealpha=0.95)
+    ax.set_xlim(-8, 5)
+    ax.legend(fontsize=7, framealpha=0.95)
     ax.grid(True, alpha=0.3)
     ax.set_yscale("log")
 
     ax = axes2[1, 1]
-    runtimes_all = [pinn.train_time] + [num_results[m]["runtime"] for m in methods]
+    runtimes_all = [pinn.train_time] + [num_results[m]["runtime"] for m in stable_methods]
     efficiencies = [l2_err / rt if rt > 0 else float('inf') for l2_err, rt in zip(l2_errors, runtimes_all)]
     bars = ax.bar(methods_all, efficiencies, color=colors, alpha=0.85, edgecolor='white', linewidth=0.5)
     ax.set_yscale("log")
@@ -635,7 +642,7 @@ def experiment_pinn_free_gaussian(
 
     # Figure 3: Runtime Comparison
     fig3, ax3 = plt.subplots(figsize=(10, 6), constrained_layout=True)
-    runtimes = [pinn.train_time] + [num_results[m]["runtime"] for m in methods]
+    runtimes = [pinn.train_time] + [num_results[m]["runtime"] for m in stable_methods]
     bars = ax3.bar(methods_all, runtimes, color=colors, alpha=0.85, edgecolor='white', linewidth=0.5)
     ax3.set_title("Runtime Comparison", fontweight='bold', pad=10)
     ax3.set_xlabel("Method", labelpad=8)
@@ -705,7 +712,8 @@ def experiment_pinn_free_gaussian(
     ax.grid(True, alpha=0.3)
     ax.set_aspect("equal")
 
-    phase_methods = ["Split-Step-FFT", "Crank-Nicolson", "RK4", "Backward-Euler", "FTCS"]
+    phase_methods = [m for m in ["Split-Step-FFT", "Crank-Nicolson", "RK4", "Backward-Euler", "FTCS"]
+                     if m in num_results]
     for idx, method in enumerate(phase_methods):
         row = (idx + 1) // 3
         col = (idx + 1) % 3
@@ -740,7 +748,7 @@ def experiment_pinn_free_gaussian(
     pinn_efficiency = l2 / pinn.train_time if pinn.train_time > 0 else float('inf')
     print(f"  {'PINN':<20s} {l2:<14.4e} {abs(mass-1.0):<14.4e} "
           f"{pinn.train_time:<10.1f}s   {pinn_efficiency:<14.4e}")
-    for m in methods:
+    for m in stable_methods:
         r = num_results[m]
         eff = r['L2'] / r['runtime'] if r['runtime'] > 0 else float('inf')
         print(f"  {m:<20s} {r['L2']:<14.4e} {r['mass_err']:<14.4e} "
@@ -778,7 +786,7 @@ def experiment_pinn_barrier(
     ensure_outdir(outdir)
     setup_plot_style(cfg.dpi)
 
-    n = 200
+    n = getattr(cfg, 'grid_size', 200)
     x, dx = grid(-12.0, 12.0, n)
     t_end = 1.5
     dt = 0.002
@@ -912,12 +920,12 @@ def main() -> None:
     )
     parser.add_argument("--quick", action="store_true",
                         help="Use fewer training epochs for quick testing")
-    parser.add_argument("--epochs", type=int, default=2000,
-                        help="Number of training epochs (default: 2000)")
-    parser.add_argument("--neurons", type=int, default=128,
-                        help="Number of neurons per hidden layer (default: 128)")
-    parser.add_argument("--layers", type=int, default=6,
-                        help="Number of hidden layers (default: 6)")
+    parser.add_argument("--epochs", type=int, default=1000,
+                        help="Number of training epochs (default: 1000)")
+    parser.add_argument("--neurons", type=int, default=64,
+                        help="Number of neurons per hidden layer (default: 64)")
+    parser.add_argument("--layers", type=int, default=4,
+                        help="Number of hidden layers (default: 4)")
     parser.add_argument("--barrier", action="store_true",
                         help="Run barrier scattering experiment")
     parser.add_argument("--dpi", type=int, default=300,

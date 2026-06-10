@@ -1,0 +1,275 @@
+% !TEX program = xelatex
+\documentclass[12pt, a4paper]{article}
+
+\usepackage[UTF8]{ctex}
+\usepackage{amsmath, amssymb, amsfonts}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{subcaption}
+
+\geometry{left=2.5cm, right=2.5cm, top=2.8cm, bottom=2.8cm}
+
+\title{\textbf{TDSE 数值方法对比实验报告} \\ \large 一维无限深势阱（修正版）}
+\author{微分方程数值解课程实验}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+% ==================================================================
+\section{实验概述}
+% ==================================================================
+
+本报告针对一维无限深方势阱中的含时 Schr\"odinger 方程（TDSE），采用五种主流数值格式进行求解，并与解析解进行系统性的误差对比分析。
+
+\subsection{物理模型}
+
+考虑一维无限深方势阱 $V(x)$：
+\[
+V(x) =
+\begin{cases}
+0, & x \in [a, b] \\[4pt]
++\infty, & \text{otherwise}
+\end{cases}
+\]
+其中势阱区间为 $[a, b] = [-10, 10]$，阱宽 $L = b - a = 20$。
+
+控制方程（原子单位 $\hbar = m = 1$）：
+\[
+i\frac{\partial \psi}{\partial t} = -\frac{1}{2}\frac{\partial^2 \psi}{\partial x^2}, \quad x \in (a, b)
+\]
+边界条件：$\psi(a, t) = \psi(b, t) = 0$ （Dirichlet 齐次边界条件）。
+
+\subsection{初始条件：本征态}
+
+选取第 $n = 3$ 个本征态作为初始波函数：
+\[
+\phi_3(x) = \sqrt{\frac{2}{L}} \sin\!\left(\frac{3\pi (x - a)}{L}\right), \quad
+E_3 = \frac{(3\pi)^2}{2 L^2} \approx 0.1110
+\]
+
+本征态的精确时间演化为纯相位旋转：
+\[
+\psi_{\text{exact}}(x, t) = \phi_3(x)\, e^{-i E_3 t}
+\]
+因此概率密度 $|\psi(x,t)|^2$ 理论上应严格保持不变，这是对数值方法酉性保持能力的最严格检验。
+
+% ==================================================================
+\section{数值设置修正说明}
+% ==================================================================
+
+\subsection{本次修正内容}
+
+与先前版本相比，本实验对求解域和边界条件进行了以下关键修正：
+
+\begin{table}[H]
+\centering
+\caption{数值设置修正对照表}
+\begin{tabular}{lll}
+\toprule
+\textbf{项目} & \textbf{修改前} & \textbf{修改后} \\
+\midrule
+计算网格区间 & $[-15,\, 15]$（2048 点） & $[-10,\, 10]$（2048 点） \\
+网格与势阱关系 & 势阱嵌于网格内部 & 求解区间 $=$ 势阱区间 \\
+边界条件实现 & 通过有限宽 mask 近似 & Dirichlet BC 直接在网格端点强制 \\
+势场定义 & \texttt{potential\_infinite\_well\_mask} & $V = 0$（势阱内部） \\
+初值构造 & mask 筛选 + 外部零填充 & 整个网格直接定义正弦函数 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{修正意义}：原先网格 $[-15, 15]$ 覆盖范围大于势阱 $[-10, 10]$，导致势阱外的区域需要通过 mask 函数人为设置高势垒来近似无穷大势。这不仅引入了近似误差，还使得 Dirichlet 边界条件的施加位置不明确。修正后，网格端点恰好位于势阱壁处，Dirichlet 条件 $\psi(\pm 10) = 0$ 由本征函数的正弦形式自然满足，边界处理更加物理自洽。
+
+\subsection{数值参数}
+
+\begin{table}[H]
+\centering
+\caption{实验数值参数}
+\begin{tabular}{ll}
+\toprule
+参数 & 取值 \\
+\midrule
+网格点数 $n$ & 2048 \\
+空间步长 $\Delta x$ & $20/2048 \approx 9.77\times 10^{-3}$ \\
+时间步长 $\Delta t$ & $1.0\times 10^{-3}$ \\
+总时长 $t_{\text{end}}$ & $8.0$ \\
+总时间步数 & 8000 \\
+CFL 数 $\mu = \Delta t / \Delta x^2$ & $\approx 10.47$ \\
+本征态量子数 $n$ & 3 \\
+本征能量 $E_3$ & $0.1110$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ==================================================================
+\section{数值方法}
+% ==================================================================
+
+本实验对比以下五种格式：
+
+\begin{enumerate}
+    \item \textbf{FTCS}（Forward-Time Centered-Space）：显式一阶格式，条件稳定。
+    \item \textbf{Backward-Euler}（隐式后向欧拉）：无条件稳定但非酉，存在振幅衰减。
+    \item \textbf{Crank-Nicolson}（隐式 Crank-Nicolson）：二阶精度、无条件稳定、酉性保持好。
+    \item \textbf{RK4}（四阶 Runge-Kutta）：显式四阶格式，对 TDSE 条件稳定。
+    \item \textbf{Split-Step-FFT}（分裂算子傅里叶法）：谱精度、酉性精确保持、依赖周期边界条件。
+\end{enumerate}
+
+% ==================================================================
+\section{结果与分析}
+% ==================================================================
+
+\subsection{整体误差对比}
+
+\begin{table}[H]
+\centering
+\caption{五种方法的完整误差分析（$t = 8.0$）}
+\label{tab:error}
+\begin{tabular}{lccccccc}
+\toprule
+\textbf{方法} & \textbf{质量} $M$ & \textbf{L1} & \textbf{L2} & \textbf{$L^\infty$} & \textbf{相对 L2} & \textbf{L2(Re)} & \textbf{L2(Im)} \\
+\midrule
+FTCS           & ---          & ---        & ---        & ---         & ---          & ---         & ---         \\
+Backward-Euler & 0.999901     & $1.068\times 10^{-2}$ & $2.784\times 10^{-3}$ & $1.450\times 10^{-3}$ & $2.784\times 10^{-3}$ & $2.221\times 10^{-3}$ & $1.679\times 10^{-3}$ \\
+Crank-Nicolson & 1.000000     & $1.099\times 10^{-2}$ & $2.836\times 10^{-3}$ & $1.530\times 10^{-3}$ & $2.836\times 10^{-3}$ & $2.259\times 10^{-3}$ & $1.715\times 10^{-3}$ \\
+RK4            & ---          & ---        & ---        & ---         & ---          & ---         & ---         \\
+Split-Step-FFT & 1.000000     & $2.510\times 10^{0}$  & $6.331\times 10^{-1}$ & $3.213\times 10^{-1}$ & $6.331\times 10^{-1}$ & $5.352\times 10^{-1}$ & $3.382\times 10^{-1}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{tdse_experiments_v2/fig1d_inf_well_error_analysis.png}
+\caption{六项误差指标的柱状图对比（FTCS 与 RK4 发散未显示）}
+\label{fig:error_bar}
+\end{figure}
+
+\subsection{各方法表现评述}
+
+\subsubsection{FTCS —— 发散}
+
+显式 FTCS 格式对于 Schr\"odinger 型方程（虚数时间导数 + 实数空间算子）本质上不稳定。无论 $\Delta t$ 多小，放大因子模长均大于 1，最终必然发散。在本实验中 FTCS 在约数百步后即溢出。
+
+\subsubsection{Backward-Euler —— 稳定但有耗散}
+
+BE 是无条件 $L^2$ 稳定的隐式格式，质量守恒良好（$M = 0.9999$）。但其一阶时间精度和非酉特性导致振幅轻微衰减和相位漂移，L2 误差约 $2.78\times 10^{-3}$。实部误差略大于虚部，表明相位漂移是主要误差来源。
+
+\subsubsection{Crank-Nicolson —— 最佳平衡}
+
+CN 以二阶时间精度和近似的酉性保持成为本实验中综合表现最好的隐式格式。质量守恒几乎完美（$M = 1.0000000004$），L2 误差仅 $2.84\times 10^{-3}$，与 BE 相当但具有更好的长期稳定性保证。实部/虚部误差分布均衡，无明显系统性偏差。
+
+\subsubsection{RK4 —— 发散}
+
+RK4 虽然具有四阶时间精度，但对 Schr\"odinger 方程的条件稳定性要求苛刻。本实验中 CFL 数 $\mu \approx 10.47$ 远超 RK4 的稳定阈值（通常需 $\mu \lesssim 0.25$），导致数值解快速发散。若要使 RK4 稳定运行，需将 $\Delta t$ 缩小至约 $2.4\times 10^{-5}$ 量级，计算代价极高。
+
+% ==================================================================
+\section{Split-Step-FFT 的边界条件问题分析}
+\label{sec:ssf_analysis}
+% ==================================================================
+
+\subsection{现象描述}
+
+从表~\ref{tab:error} 可以看出，Split-Step-FFT（SSF）的质量守恒近乎完美（$M = 1.000000$），但其 L2 误差高达 $6.33\times 10^{-1}$，比 CN/BE 大了两个数量级以上。这一反常现象的根本原因在于\textbf{边界条件的根本性不匹配}。
+
+\subsection{原因分析}
+
+\subsubsection{周期边界 vs.\ Dirichlet 边界}
+
+SSF 方法基于快速傅里叶变换（FFT）实现动能算符的对角化。FFT 固有地假设\textbf{周期边界条件}（Periodic Boundary Condition, PBC）：
+\[
+\psi(x + L_{\text{grid}}) = \psi(x), \quad L_{\text{grid}} = b - a = 20
+\]
+而无限深势阱的物理边界条件是\textbf{Dirichlet 齐次边界}：
+\[
+\psi(a) = \psi(b) = 0
+\]
+
+这两种边界条件之间的矛盾导致了 SSF 的巨大误差：
+
+\begin{enumerate}
+    \item \textbf{傅里叶级数的 Gibbs 现象}：将满足 Dirichlet 条件的函数用周期傅里叶级数展开时，在边界处会产生剧烈的振荡（Gibbs 现象）。本征态 $\phi_3(x)$ 在 $x = \pm 10$ 处从零值突然跳变到零值（虽然值相同，但导数不连续），FFT 无法准确表示这种行为。
+
+    \item \textbf{虚假的周期延拓}：FFT 将区间 $[-10, 10]$ 内的波函数视为一个周期的片段，并自动将其周期延拓。对于本征态 $\phi_3(x)$，这意味着在 $x > 10$ 处会出现一个``镜像''的波函数副本，而物理上该区域应为严格的零。这种非物理的周期延拓直接污染了整个求解域内的数值解。
+
+    \item \textbf{动量空间的混叠}：由于边界不连续性，傅里叶变换后的动量谱包含大量高频伪成分，这些成分在动能演化步中被错误地放大或衰减。
+\end{enumerate}
+
+\subsubsection{为什么质量仍接近 1？}
+
+值得注意的是，尽管波形严重失真，SSF 的概率质量仍保持在 $M \approx 1.0$。这是因为 SSF 的分裂算子结构保证了\textbf{严格的酉性}——其误差不是振幅损失，而是\textbf{波形畸变}。波函数的能量被重新分配到了错误的模式（特别是边界附近的 Gibbs 振荡），但总概率积分不变。这正是酉性格式的特征：它不会``丢失''概率，只是把它放错了位置。
+
+\subsection{定量验证}
+
+\begin{table}[H]
+\centering
+\caption{SSF 误差分解与其他方法的对比}
+\label{tab:ssf_compare}
+\begin{tabular}{lccc}
+\toprule
+\textbf{方法} & \textbf{L2 误差} & \textbf{相对 L2} & \textbf{质量} \\
+\midrule
+Crank-Nicolson   & $2.836 \times 10^{-3}$ & $2.836 \times 10^{-3}$ & $1.000000$ \\
+Backward-Euler   & $2.784 \times 10^{-3}$ & $2.784 \times 10^{-3}$ & $0.999901$ \\
+Split-Step-FFT   & $6.331 \times 10^{-1}$ & $6.331 \times 10^{-1}$ & $1.000000$ \\
+\midrule
+\multicolumn{4}{l}{\textit{注：SSF 的 L2 误差约为 CN/BE 的 223 倍}} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{结论与建议}
+
+\begin{itemize}
+    \item SSF 是一种\textbf{优秀的方法}，但其适用前提是问题本身具有周期性或波函数在边界处自然趋近于零（如自由传播的高斯波包在足够大的区域外衰减为零）。
+    \item 对于具有硬边界（Dirichlet/Neumann）的问题，应优先选择基于有限差分的隐式格式（如 Crank-Nicolson）或配合吸收边界层使用 SSF。
+    \item 若必须在 Dirichlet 问题中使用谱方法，可考虑\textbf{正弦变换（DST）}替代 FFT，因为正弦变换的本征函数自然满足 Dirichlet 边界条件。
+\end{itemize}
+
+% ==================================================================
+\section{可视化结果}
+% ==================================================================
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{tdse_experiments_v2/fig1a_inf_well_all.png}
+\caption{全部五种方法的三值对比图（$|\psi|^2$, Re$[\psi]$, Im$[\psi]$），FTCS 标记为发散}
+\label{fig:all}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{tdse_experiments_v2/fig1b_inf_well_stable.png}
+\caption{四种稳定方法（不含 FTCS）与解析解的三值对比}
+\label{fig:stable}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{tdse_experiments_v2/fig1c_inf_well_vs_exact.png}
+\caption{各稳定方法分别与解析解的单独对比（含 L1/L2/$L^\infty$ 误差标注）}
+\label{fig:vs_exact}
+\end{figure}
+
+% ==================================================================
+\section{总结}
+% ==================================================================
+
+\begin{enumerate}
+    \item 本实验将求解区间从 $[-15, 15]$ 修正为 $[-10, 10]$（与势阱区间一致），使得 Dirichlet 边界条件在网格端点处被正确且精确地施加。
+
+    \item 五种方法中，\textbf{Crank-Nicolson} 综合表现最优：二阶精度、质量守恒完美、L2 误差最小（$2.84\times 10^{-3}$）。\textbf{Backward-Euler} 表现相近但有一阶精度的固有局限。
+
+    \item \textbf{FTCS 和 RK4} 在当前 CFL 数下均发散，前者因本质不稳定，后者因稳定性限制过严。
+
+    \item \textbf{Split-Step-FFT} 虽然保持完美的质量守恒（酉性），但由于 FFT 固有的周期边界条件与问题的 Dirichlet 边界条件根本性不匹配，产生了高达 $63\%$ 的 L2 误差。这一结果深刻说明了\textbf{选择数值方法时必须匹配问题的边界类型}。
+
+    \item 对于具有硬边界的量子系统，\textbf{有限差分 + 隐式格式（CN）}是最可靠的选择；对于开放/周期系统，\textbf{SSF} 则是谱精度的理想方案。
+\end{enumerate}
+
+\end{document}

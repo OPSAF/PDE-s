@@ -48,6 +48,26 @@ def l1_l2_linf_error(psi_num: Array, psi_ref: Array, dx: float) -> Tuple[float, 
     return l1, l2, linf
 
 
+def l2_error_real_imag(psi_num: Array, psi_ref: Array, dx: float) -> Tuple[float, float, float]:
+    """Compute separate L2 errors for real and imaginary parts.
+
+    After global phase alignment, this decomposes the complex L2 error
+    into contributions from the real part (amplitude/phase cross-talk)
+    and the imaginary part.  A method whose error is heavily imbalanced
+    between Re and Im is likely suffering from phase drift rather than
+    amplitude decay.
+
+    Returns:
+        (l2_real, l2_imag, l2_total)
+    """
+    psi_aligned = align_global_phase(psi_num, psi_ref, dx)
+    diff = psi_aligned - psi_ref
+    l2_real = float(np.sqrt(np.sum(np.real(diff) ** 2) * dx))
+    l2_imag = float(np.sqrt(np.sum(np.imag(diff) ** 2) * dx))
+    l2_total = float(np.sqrt(np.sum(np.abs(diff) ** 2) * dx))
+    return l2_real, l2_imag, l2_total
+
+
 def align_global_phase(psi: Array, reference: Array, dx: float) -> Array:
     """Remove irrelevant global phase before comparing wave functions."""
     inner = np.sum(np.conj(reference) * psi) * dx
