@@ -16,11 +16,8 @@ tdse_case7_outputs/
 tdse_case8_outputs/
 tdse_case9_outputs/
 example_output/
-__pycache__/
 
 # LaTeX 相关
-LATEX/
-LATEX2/
 *.pdf
 *.log
 *.synctex.gz
@@ -29,6 +26,13 @@ LATEX2/
 *.toc
 *.nav
 *.snm
+*.fls
+*.fdb_latexmk
+*.bbl
+*.blg
+*.lof
+*.lot
+*.run.xml
 
 # 图片和数据文件
 *.png
@@ -44,4 +48,36 @@ tdse_results_v3/
 tdse_results_v4/
 references/
 tdse_references/
+
+# Python 缓存和临时文件
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+.pytest_cache/
+.mypy_cache/
+
+# IDE 和编辑器配置
 .vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 临时脚本和清理文件
+clean_*.py
+report_final.tex
+gitignore
+run_pinn.*
+ex_pinn.py
+test_1d_fix.py
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 环境变量和密钥
+.env
+.env.local
+*.secret
